@@ -40,7 +40,29 @@ def main():
 		#if this SNP
 		if rec.is_snp and not rec.is_monomorphic:
 			#Check if parsimony-informative
-			pass
+			pass 
+
+'''
+Processing algorithm:
+	k = order of overlap (number of SNP nodes encompassed)
+	for each SNP i, explore right until finding minimum-k conflict
+	Add interval to data structure, increment i and continue
+	
+Data structure:
+	Interval tree:
+	Interval tree, but intervals indexed by k
+	Solving goes from k=1 -> kmax
+	
+Solving algorithm:
+	For each layer from k=1 to kmax:
+		for each interval in layer k
+			query center point of interval to get interval depth
+			if overlaps exist:
+				query each SNP-node centerpoint between interval start and end
+				place break at centerpoint which maximizes depth, or center of maximum depth region
+				delete all intervals intersecting with breakpoint
+
+'''
 
 
 #Function to write list of regions tuples, in GATK format
