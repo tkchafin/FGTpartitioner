@@ -52,6 +52,9 @@ Data structure:
 	Interval tree:
 	Interval tree, but intervals indexed by k
 	Solving goes from k=1 -> kmax
+
+check out kerneltree for a prepackaged option: https://github.com/biocore-ntnu/kerneltree
+or: https://github.com/bxlab/bx-python
 	
 Solving algorithm:
 	For each layer from k=1 to kmax:
