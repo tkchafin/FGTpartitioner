@@ -3,14 +3,35 @@ Partitions an alignment using the 4-gamete test
 
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
 
-### Installation 
-Dependencies:
+### Dependencies
+- Python >3
+- pyVCF
+- intervaltree
 
-conda install -c conda-forge intervaltree
+The easiest way to install the dependencies is through conda:
+```
+conda install -c conda-forge -c bioconda pyvcf intervaltree
+```
+You will additionally need tabix installed to pre-process your input file:
+```
+conda install -c bioconda tabix 
+```
 
-### Usage
 
-Will come later
+### Inputs
+
+Coming Soon
+
+You will need to block-compress and index your VCF file to speed up parsing:
+```
+#Run bgzip (NOT gzip) to compress your joint VCF file
+bgzip file.vcf
+
+#tabix to index it
+tabix -h -f -p vcf file.vcf.gz
+```
+
+
 
 
 
