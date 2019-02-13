@@ -6,6 +6,7 @@ import os
 import getopt
 import vcf
 import pysam
+import random
 import collections
 import intervaltree
 from intervaltree import Interval, IntervalTree
@@ -47,29 +48,73 @@ def main():
 	'''
 	
 
+	miss_skips=0
+	allel_skips=0
+	count=0
+	
 	#for each chromosome
 	for this_chrom in contigs: 
+		print("Checking", this_chrom)
 		#initialize data structures
 		tree = IntervalTree()
 		k_lookup = dict()
 		nodes = list()
 		start = 0
 		stop =1
+		index=1 #keys for intervals
 		
-		#gather records from VCF
+		#Gather relevant SNP calls from the VCF 
 		records = vfh.fetch(this_chrom)
 		for rec in records:
 			if rec.CHROM != this_chrom:
 				continue
 			else:
 				#if this SNP
-				if rec.is_snp and not rec.is_monomorphic:
-					#Check if parsimony-informative
-					#if no current lastNode, check FGT compatibility
-					#if compatible:
-					#	keep lastNode and examine next rec	
-					print(rec.samples)
-					
+				if rec.is_snp and not rec.is_monomorphic and not rec.is_indel:
+					if rec.num_called < 4:
+						miss_skips +=1
+					elif len(rec.alleles) > 2:
+						allel_skips +=1
+					else:
+						#print(rec.samples)
+						samps = [s.gt_type for s in rec.samples]
+						nodes.append(SNPcall(rec.POS, samps))
+						count+=1
+						if count >= 100:
+							break
+		
+		#Traverse node list to find FGT conflicts
+		if len(nodes) > 2:
+			start = 0
+			end = 1
+			while end < len(nodes):
+				print("Start=",start)
+				print("End=",end)
+				#Check if start and end are compatible
+				compat = nodes[start].FGT(nodes[end], params.rule)
+				if compat == True: #if compatible, increment end and continue 
+					print("Compatible! Checking next SNP")
+					end+=1
+					continue
+				else: #if FGT fails, submit interval to IntervalTree, and increment start
+					print("Not compatible!")
+					k_lookup[count] = end-start #k-layer for this interval
+					tree.addi(nodes[start].position, nodes[end].position, end-start) #add interval from start.position to end.position
+					count +=1 #increment key, so all will be unique
+					start = start+1 #move start to next SNP 
+					end = start+1 #reset end to neighbor of new start
+
+			print(tree)
+
+			
+		else:
+			print("No passing variants found for chromosome",this_chrom,"")
+		
+			
+			#if no current lastNode, 
+			#if curent lastNode, check FGT compatibility
+			#if compatible:
+			#	keep lastNode and examine next rec		
 			# if not this_chrom:
 			# 	this_chrom = rec.CHROM
 			# 	start = 1
@@ -91,6 +136,9 @@ def main():
 
 
 '''
+Skip sites with <4 genotyped individuals
+Skip sites with >2 alleles
+
 Processing algorithm:
 	k = order of overlap (number of SNP nodes encompassed)
 	for each SNP i, explore right until finding minimum-k conflict
@@ -119,6 +167,100 @@ Solving algorithm:
 
 '''
 
+class SNPcall():
+	def __init__(self, pos, samps):
+		self.position = int(pos)
+		self.calls = list(samps)
+
+	def FGT(self, other, rule):
+		print("Four gamete test for",self.position,"and",other.position)
+		gametes = [0,0,0,0] #00, 01, 10, 11
+		hets = list()
+		
+		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if None not in [gt, other.calls[i]]]
+		print(genotypes)
+		if (all(g in [0,1,2] for g in genotypes)):
+			print("Illegal genotype:",genotypes)
+			return(None)
+		for geno in genotypes:
+			gamete = self.hapCheck(geno)
+			if gamete:
+				gametes[gamete] = 1
+			else:
+				if 1 in geno:
+					if rule == 1:
+						if geno[0] == 1:
+							geno[0] = random.choice([0,2])
+						if geno[1] == 1:
+							geno[1] = random.choice([0,2])
+						#print(geno)
+						gametes[self.hapCheck(geno)] = 1
+					elif rule == 2:
+						possible1 = list()
+						possible2 = list()
+						if geno[0] == 1:
+							possible1 = [0,2]
+						else:
+							possible1 = [geno[0]]
+						if geno[1] == 1:
+							possible2 = [0,2]
+						else:
+							possible2 = [geno[1]]
+						for i in possible1:
+							for j in possible2:
+								gametes[self.hapCheck([i,j])] = 1
+					elif rule == 3:
+						hets.append(geno)
+		if sum(gametes) == 4:
+			return(False) #return False if not compatible
+		elif hets:
+			if not self.optimisticFGT(gametes, hets):
+				return(False) #return false if not compatible 
+			else:
+				return(True)
+		else:
+			return(True)
+	
+	@staticmethod
+	def hapCheck(geno):
+		if geno[0] == geno[1] == 0:
+			return(0)
+		elif geno[0] == geno[1] == 2:
+			return(3)
+		elif geno[0] == 0 and geno[1] == 2:
+			return(1)
+		elif geno[0] == 2 and geno[1] == 0:
+			return(2)
+		else:
+			return None
+	
+	def optimisticFGT(self, seen, hets):
+		possibilities = list()
+		for het in hets:
+			locals = list()
+			possible1 = list()
+			possible2 = list()
+			if het[0] == 1:
+				possible1 = [0,2]
+			else:
+				possible1 = [het[0]]
+			if het[1] == 1:
+				possible2 = [2,0]
+			else:
+				possible2 = [het[1]]
+			for i in possible1:
+				for j in possible2:
+					copy = seen[:] #deep copy
+					copy[self.hapCheck([i,j])] = 1
+					locals.append(copy)
+			possibilities = locals[:]
+		print(possibilities)
+		for opt in possibilities:
+			print(opt)
+			if sum(opt) != 4: #if ANY possibilities 
+				return True #return False if not compatible
+		return(False)
+		
 
 #Function to write list of regions tuples, in GATK format
 def write_regions(f, r):
