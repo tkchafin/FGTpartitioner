@@ -12,6 +12,11 @@ The easiest way to install the dependencies is through conda:
 ```
 conda install -c conda-forge -c bioconda pyvcf intervaltree
 ```
+You will additionally need tabix installed to pre-process your input file:
+```
+conda install -c bioconda tabix 
+```
+
 
 ### Inputs
 
@@ -25,6 +30,7 @@ bgzip file.vcf
 #tabix to index it
 tabix -h -f -p vcf file.vcf.gz
 ```
+
 
 
 
