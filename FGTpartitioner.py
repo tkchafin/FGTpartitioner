@@ -7,6 +7,7 @@ import getopt
 import vcf
 import pysam
 import random
+import math
 import collections
 import operator
 import intervaltree
@@ -15,7 +16,6 @@ from collections import OrderedDict
 
 def main():
 	params = parseArgs()
-	start = timer()
 
 	print("\nOpening VCF file:",params.vcf)
 	vfh = vcf.Reader(filename=params.vcf)
@@ -107,15 +107,9 @@ def main():
 						nodes.append(SNPcall(rec.POS, samps))
 						count+=1
 						
-						'''
-	*********************** Remove after testing ********************
-						'''
-						if count >= 10000:
-							break
 
-						'''
-	******************************************************************
-						'''
+						# if count >= 1000:
+						# 	break
 		
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
@@ -191,7 +185,12 @@ def main():
 		print("\tChromosome",this_chrom,"- found",len(breaks),"breakpoints.")
 	
 	print("\nWriting regions to file (format: chromosome:start-end)")		
-	regions = getRegions(breaks, contigs)
+	regions = getRegions(breakpoints, contigs)
+	
+	if len(regions) > 0:
+		write_regions(params.out, regions)
+	else:
+		print("No regions found.")
 	
 	print("Done\n")
 
@@ -242,9 +241,28 @@ def write_regions(f, r):
 		finally:
 			fh.close()
 
+#breaks is a dict where key = chromosome and value = list of breakpoints
+#lengths is a dict where key = chromosome and value = total length
 #function to calculate region bounds from breakpoints
+#returns list of region tuples
 def getRegions(breaks, lengths):
-	pass
+	ret = list()
+	for chrom in breaks.keys():
+		if len(breaks[chrom]) == 1:
+			ret.append(tuple([chrom, 1, int(round(breaks[chrom][0]))]))
+		elif len(breaks[chrom]) > 1:
+			sorted_breaks = sorted(breaks[chrom])
+			first = tuple([chrom, 1, int(round(sorted_breaks[0]))])
+			ret.append(first)
+			
+			for idx, br in enumerate(sorted_breaks[1:-1]):
+				ret.append(tuple([chrom, int(round(sorted_breaks[idx])), int(math.ceil(sorted_breaks[idx+1]))]))
+			
+			last = tuple([chrom, int(math.ceil(sorted_breaks[-1])), int(lengths[chrom])])	
+			ret.append(last)
+		else:
+			ret.append([chrom, 1, int(lengths[chrom])])
+	return(ret)
 
 
 
