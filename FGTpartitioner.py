@@ -8,6 +8,7 @@ import vcf
 import pysam
 import random
 import collections
+import operator
 import intervaltree
 from intervaltree import Interval, IntervalTree
 from collections import OrderedDict 
@@ -15,10 +16,16 @@ from collections import OrderedDict
 def main():
 	params = parseArgs()
 
+	print("Opening VCF file:",params.vcf)
 	vfh = vcf.Reader(filename=params.vcf)
 
 	#grab contig sizes
 	contigs = dict()
+	if params.chrom:
+		print("Only reading chromosome:",params.chrom)
+	else:
+		print("Reading all chromosomes from VCF...")
+	
 	for c,s in vfh.contigs.items():
 		if params.chrom and s.id != params.chrom:
 			continue
@@ -52,6 +59,18 @@ def main():
 	allel_skips=0
 	count=0
 	
+	print("Diploid resolution strategy: ", end="")
+	if params.rule==1:
+		print("Random", end="")
+	elif params.rule==2:
+		print("Pessimistic", end="")
+	elif params.rule==3:
+		print("Optimistic",end="")
+	else:
+		print("Invalid!",end="")
+		sys.exit(1)
+	print(" (change with -r)")
+	
 	#for each chromosome
 	for this_chrom in contigs: 
 		print("Checking", this_chrom)
@@ -65,6 +84,8 @@ def main():
 		
 		#Gather relevant SNP calls from the VCF 
 		records = vfh.fetch(this_chrom)
+		if not records:
+			print("Not enough records found for chromosome:",this_chrom)
 		for rec in records:
 			if rec.CHROM != this_chrom:
 				continue
@@ -80,58 +101,64 @@ def main():
 						samps = [s.gt_type for s in rec.samples]
 						nodes.append(SNPcall(rec.POS, samps))
 						count+=1
-						if count >= 100:
+						
+						'''
+	*********************** Remove after testing ********************
+						'''
+						if count >= 1000:
 							break
+
+						'''
+	******************************************************************
+						'''
 		
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
 			start = 0
 			end = 1
-			while end < len(nodes):
-				print("Start=",start)
-				print("End=",end)
+			while start <= len(nodes):
+				#print("Start=",start)
+				#print("End=",end)
+				if end >= len(nodes):
+					start = start + 1
+					end= start + 1
+					continue
 				#Check if start and end are compatible
 				compat = nodes[start].FGT(nodes[end], params.rule)
 				if compat == True: #if compatible, increment end and continue 
-					print("Compatible! Checking next SNP")
+					#print("Compatible! Checking next SNP")
 					end+=1
 					continue
 				else: #if FGT fails, submit interval to IntervalTree, and increment start
-					print("Not compatible!")
-					k_lookup[count] = end-start #k-layer for this interval
-					tree.addi(nodes[start].position, nodes[end].position, end-start) #add interval from start.position to end.position
+					#print("Not compatible!")
+					interval = Interval(nodes[start].position, nodes[end].position, end-start)
+					k_lookup[count] = interval #k-layer for this interval
+					tree.add(interval) #add interval from start.position to end.position
 					count +=1 #increment key, so all will be unique
 					start = start+1 #move start to next SNP 
 					end = start+1 #reset end to neighbor of new start
 
-			print(tree)
-
+			print("Found ",len(tree),"intervals.")
+			#print(tree)
+			
+			#order k_lookup by k
+			#NOTE: Over-rode the __lt__ function for Intervals: see __main__ below
+			#otherwise this would sort on start position!
+			sorted_k = sorted(k_lookup.items(), key=operator.itemgetter(1)) #gets ordered tuples
+			#print(sorted_k)
+			
+			#start resolving from lowest k
+			
+			
+			#remove resolved from tree 
+			#pop off dictionionary 
+			#for each interval: ask if still in dictionary 
 			
 		else:
 			print("No passing variants found for chromosome",this_chrom,"")
+			
 		
 			
-			#if no current lastNode, 
-			#if curent lastNode, check FGT compatibility
-			#if compatible:
-			#	keep lastNode and examine next rec		
-			# if not this_chrom:
-			# 	this_chrom = rec.CHROM
-			# 	start = 1
-			# 	stop = 1
-			# 	count = 0
-			# #If we entered new chromosome, submit old break
-			# elif this_chrom != rec.CHROM:
-			# 	t = tuple([this_chrom, start, contigs[this_chrom]])
-			# 	regions.append(t)
-			# 	this_chrom = rec.CHROM
-			# 	start = 1
-			# 	stop = 1
-			# 	tree = IntervalTree()
-			# 	k_lookup = dict()
-			# 	nodes = list()
-			# 	#resolveTree()
-			# 	sys.exit(0)
 		
 
 
@@ -149,13 +176,8 @@ Data structure:
 	Interval tree, but intervals indexed by k
 	Solving goes from k=1 -> kmax
 
-check out kerneltree for a prepackaged option: https://github.com/biocore-ntnu/kerneltree
-or: https://github.com/bxlab/bx-python
-
 Or nested containment list might be better:https://academic.oup.com/bioinformatics/article/23/11/1386/199545
 
-	
-	
 Solving algorithm:
 	For each layer from k=1 to kmax:
 		for each interval in layer k
@@ -167,19 +189,23 @@ Solving algorithm:
 
 '''
 
+
 class SNPcall():
 	def __init__(self, pos, samps):
 		self.position = int(pos)
 		self.calls = list(samps)
+	
+	def __lt__(self, other):
+		return(self.position < other.position)
 
 	def FGT(self, other, rule):
-		print("Four gamete test for",self.position,"and",other.position)
+		#print("Four gamete test for",self.position,"and",other.position)
 		gametes = [0,0,0,0] #00, 01, 10, 11
 		hets = list()
 		
 		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if None not in [gt, other.calls[i]]]
-		print(genotypes)
-		if (all(g in [0,1,2] for g in genotypes)):
+		#print(genotypes)
+		if (all(g in [0,1,2] for g in genotypes)): #make sure gt_types are valid
 			print("Illegal genotype:",genotypes)
 			return(None)
 		for geno in genotypes:
@@ -254,9 +280,9 @@ class SNPcall():
 					copy[self.hapCheck([i,j])] = 1
 					locals.append(copy)
 			possibilities = locals[:]
-		print(possibilities)
+		#print(possibilities)
 		for opt in possibilities:
-			print(opt)
+			#print(opt)
 			if sum(opt) != 4: #if ANY possibilities 
 				return True #return False if not compatible
 		return(False)
@@ -349,6 +375,11 @@ class parseArgs():
 		print()
 		sys.exit()
 
+###overriding __lt__ method for Interval
+def IntervalSort(self,other):
+	return(self.data < other.data)
+
 #Call main function
 if __name__ == '__main__':
-    main()
+	Interval.__lt__ = IntervalSort
+	main()
