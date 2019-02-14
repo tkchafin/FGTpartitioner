@@ -15,8 +15,9 @@ from collections import OrderedDict
 
 def main():
 	params = parseArgs()
+	start = timer()
 
-	print("Opening VCF file:",params.vcf)
+	print("\nOpening VCF file:",params.vcf)
 	vfh = vcf.Reader(filename=params.vcf)
 
 	#grab contig sizes
@@ -69,11 +70,14 @@ def main():
 	else:
 		print("Invalid!",end="")
 		sys.exit(1)
-	print(" (change with -r)")
+	print(" (change with -r)\n")
 	
+	breakpoints = collections.OrderedDict()
+	
+	print("Starting FGT sweeps:\n")
 	#for each chromosome
 	for this_chrom in contigs: 
-		print("Checking", this_chrom)
+		print("Performing FGT check on:", this_chrom)
 		#initialize data structures
 		tree = IntervalTree()
 		k_lookup = dict()
@@ -81,6 +85,7 @@ def main():
 		start = 0
 		stop =1
 		index=1 #keys for intervals
+		breaks = list()
 		
 		#Gather relevant SNP calls from the VCF 
 		records = vfh.fetch(this_chrom)
@@ -105,7 +110,7 @@ def main():
 						'''
 	*********************** Remove after testing ********************
 						'''
-						if count >= 1000:
+						if count >= 10000:
 							break
 
 						'''
@@ -138,46 +143,58 @@ def main():
 					start = start+1 #move start to next SNP 
 					end = start+1 #reset end to neighbor of new start
 
-			print("Found ",len(tree),"intervals.")
+			print("\tFound ",len(tree),"intervals.")
 			#print(tree)
 			
 			#order k_lookup by k
 			#NOTE: Over-rode the __lt__ function for Intervals: see __main__ below
 			#otherwise this would sort on start position!
 			sorted_k = sorted(k_lookup.items(), key=operator.itemgetter(1)) #gets ordered tuples
-			print(sorted_k)
+			#print(sorted_k)
 			
 			#start resolving from lowest k
+			print("\tResolving FGT incompatibilities...")
 			for i in sorted_k:
 				this_interval = i[1]
-				#get all intervals overlapping range(start:end)
-				#overlaps = tree[this_interval.begin: this_interval.end]
-				#query each centerpoint
-				global_center = (nodes[this_interval.data.start] + nodes[this_interval.data.end]) / 2
-				max_centerpoint = global_center
-				max_depth = len(tree[global_center])
-				print("K=",this_interval.data.k)
-				for check_start in range(this_interval.data.start,this_interval.data.end-1):
-					print(check_start)
-					centerpoint = (nodes[check_start].position + nodes[check_start+1].position) / 2
-					intersects = tree[centerpoint] #all intervals intersecting with current centerpoint
-					local_depth = len(intersects) #depth at centerpoint
-					#if current depth highest seen, keep it
-					if len(intersects) > max_depth:
-						max_depth = len(intersects)
-						max_centerpoint = centerpoint
-				#remove all intervals overlapping with centerpoint at greatest depth
-				#remove resolved from tree 
-				#pop off dictionionary 
-				#for each interval: ask if still in dictionary 
-				sys.exit()
-			
+				if this_interval in tree:
+					#get all intervals overlapping range(start:end)
+					#overlaps = tree[this_interval.begin: this_interval.end]
+					#query each centerpoint
+					global_center = (nodes[this_interval.data.start].position + nodes[this_interval.data.end].position) / 2
+					max_centerpoint = global_center
+					#max_intersects = tree[global_center]
+					max_depth = len(tree[global_center])
+					#print("K=",this_interval.data.k)
+					#find centerpoint of greatest depth in range of target interval
+					for check_start in range(this_interval.data.start,this_interval.data.end-1):
+						#print(check_start)
+						centerpoint = (nodes[check_start].position + nodes[check_start+1].position) / 2
+						intersects = tree[centerpoint] #all intervals intersecting with current centerpoint
+						local_depth = len(intersects) #depth at centerpoint
+						#if current depth highest seen, keep it
+						if local_depth > max_depth:
+							max_depth = local_depth
+							max_centerpoint = centerpoint
+							#max_intersects = intersects
+					#remove all intervals overlapping with centerpoint at greatest depth
+					del tree[max_centerpoint]
+					
+					#add to breakpoints
+					breaks.append(max_centerpoint)
+					#print("Selected breakpoint:",max_centerpoint)
+
 		else:
-			print("No passing variants found for chromosome",this_chrom,"")
-			
+			print("\tNo passing variants found for chromosome",this_chrom,"")
 		
-			
-		
+		#submit all selection breakpoints
+		breakpoints[this_chrom] = breaks
+		print("\tChromosome",this_chrom,"- found",len(breaks),"breakpoints.")
+	
+	print("\nWriting regions to file (format: chromosome:start-end)")		
+	regions = getRegions(breaks, contigs)
+	
+	print("Done\n")
+
 
 
 '''
@@ -206,6 +223,29 @@ Solving algorithm:
 				delete all intervals intersecting with breakpoint
 
 '''
+
+
+#Function to write list of regions tuples, in GATK format
+def write_regions(f, r):
+
+	with open(f, 'w') as fh:
+		try:
+			for reg in r:
+				ol = str(reg[0]) + ":" + str(reg[1]) + "-" + str(reg[2]) + "\n"
+				fh.write(ol)
+		except IOError as e:
+			print("Could not read file %s: %s"%(f,e))
+			sys.exit(1)
+		except Exception as e:
+			print("Unexpected error reading file %s: %s"%(f,e))
+			sys.exit(1)
+		finally:
+			fh.close()
+
+#function to calculate region bounds from breakpoints
+def getRegions(breaks, lengths):
+	pass
+
 
 
 class SNPcall():
@@ -306,25 +346,6 @@ class SNPcall():
 				return True #return False if not compatible
 		return(False)
 		
-
-#Function to write list of regions tuples, in GATK format
-def write_regions(f, r):
-
-	with open(f, 'w') as fh:
-		try:
-			for reg in r:
-				ol = str(reg[0]) + ":" + str(reg[1]) + "-" + str(reg[2]) + "\n"
-				fh.write(ol)
-		except IOError as e:
-			print("Could not read file %s: %s"%(f,e))
-			sys.exit(1)
-		except Exception as e:
-			print("Unexpected error reading file %s: %s"%(f,e))
-			sys.exit(1)
-		finally:
-			fh.close()
-
-
 
 #Object to parse command-line arguments
 class parseArgs():
@@ -430,5 +451,8 @@ class IntervalData():
 
 #Call main function
 if __name__ == '__main__':
-	Interval.__lt__ = IntervalSort
-	main()
+	try:
+		Interval.__lt__ = IntervalSort #override sort for Interval
+		main()
+	except KeyboardInterrupt:
+		sys.exit(1)
