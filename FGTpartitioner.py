@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/anaconda/bin/python3
 
 import re
 import sys
@@ -13,6 +13,8 @@ import operator
 import intervaltree
 from intervaltree import Interval, IntervalTree
 from collections import OrderedDict 
+
+import line_profiler
 
 def main():
 	params = parseArgs()
@@ -55,11 +57,6 @@ def main():
 				delete all intervals intersecting with breakpoint
 	'''
 	
-
-	miss_skips=0
-	allel_skips=0
-	count=0
-	
 	print("Diploid resolution strategy: ", end="")
 	if params.rule==1:
 		print("Random", end="")
@@ -91,51 +88,14 @@ def main():
 		records = vfh.fetch(this_chrom)
 		if not records:
 			print("Not enough records found for chromosome:",this_chrom)
-		for rec in records:
-			if rec.CHROM != this_chrom:
-				continue
-			else:
-				#if this SNP
-				if rec.is_snp and not rec.is_monomorphic and not rec.is_indel:
-					if rec.num_called < 4:
-						miss_skips +=1
-					elif len(rec.alleles) > 2:
-						allel_skips +=1
-					else:
-						#print(rec.samples)
-						samps = [s.gt_type for s in rec.samples]
-						nodes.append(SNPcall(rec.POS, samps))
-						count+=1
-						
+		else:
+			nodes = fetchNodes(records, this_chrom)
 
-						# if count >= 1000:
-						# 	break
 		
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
-			start = 0
-			end = 1
-			while start <= len(nodes):
-				#print("Start=",start)
-				#print("End=",end)
-				if end >= len(nodes):
-					start = start + 1
-					end= start + 1
-					continue
-				#Check if start and end are compatible
-				compat = nodes[start].FGT(nodes[end], params.rule)
-				if compat == True: #if compatible, increment end and continue 
-					#print("Compatible! Checking next SNP")
-					end+=1
-					continue
-				else: #if FGT fails, submit interval to IntervalTree, and increment start
-					#print("Not compatible!")
-					interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end, index))
-					k_lookup[count] = interval #k-layer for this interval
-					tree.add(interval) #add interval from start.position to end.position
-					count +=1 #increment key, so all will be unique
-					start = start+1 #move start to next SNP 
-					end = start+1 #reset end to neighbor of new start
+			
+			findFGTs(tree,nodes,params,k_lookup)
 
 			print("\tFound ",len(tree),"intervals.")
 			#print(tree)
@@ -148,41 +108,14 @@ def main():
 			
 			#start resolving from lowest k
 			print("\tResolving FGT incompatibilities...")
-			for i in sorted_k:
-				this_interval = i[1]
-				if this_interval in tree:
-					#get all intervals overlapping range(start:end)
-					#overlaps = tree[this_interval.begin: this_interval.end]
-					#query each centerpoint
-					global_center = (nodes[this_interval.data.start].position + nodes[this_interval.data.end].position) / 2
-					max_centerpoint = global_center
-					#max_intersects = tree[global_center]
-					max_depth = len(tree[global_center])
-					#print("K=",this_interval.data.k)
-					#find centerpoint of greatest depth in range of target interval
-					for check_start in range(this_interval.data.start,this_interval.data.end-1):
-						#print(check_start)
-						centerpoint = (nodes[check_start].position + nodes[check_start+1].position) / 2
-						intersects = tree[centerpoint] #all intervals intersecting with current centerpoint
-						local_depth = len(intersects) #depth at centerpoint
-						#if current depth highest seen, keep it
-						if local_depth > max_depth:
-							max_depth = local_depth
-							max_centerpoint = centerpoint
-							#max_intersects = intersects
-					#remove all intervals overlapping with centerpoint at greatest depth
-					del tree[max_centerpoint]
-					
-					#add to breakpoints
-					breaks.append(max_centerpoint)
-					#print("Selected breakpoint:",max_centerpoint)
+			breaks = resolveFGTs(tree, sorted_k, nodes)
 
 		else:
 			print("\tNo passing variants found for chromosome",this_chrom,"")
 		
 		#submit all selection breakpoints
 		breakpoints[this_chrom] = breaks
-		print("\tChromosome",this_chrom,"- found",len(breaks),"breakpoints.")
+		print("\tFound",len(breaks),"most parsimonious breakpoints.")
 	
 	print("\nWriting regions to file (format: chromosome:start-end)")		
 	regions = getRegions(breakpoints, contigs)
@@ -222,6 +155,95 @@ Solving algorithm:
 				delete all intervals intersecting with breakpoint
 
 '''
+
+
+def resolveFGTs(tree, sorted_k, nodes):
+	breaks = list()
+	for i in sorted_k:
+		this_interval = i[1]
+		if this_interval in tree:
+			#get all intervals overlapping range(start:end)
+			#overlaps = tree[this_interval.begin: this_interval.end]
+			#query each centerpoint
+			global_center = (nodes[this_interval.data.start].position + nodes[this_interval.data.end].position) / 2
+			max_centerpoint = global_center
+			#max_intersects = tree[global_center]
+			max_depth = len(tree[global_center])
+			#print("K=",this_interval.data.k)
+			#find centerpoint of greatest depth in range of target interval
+			for check_start in range(this_interval.data.start,this_interval.data.end-1):
+				#print(check_start)
+				centerpoint = (nodes[check_start].position + nodes[check_start+1].position) / 2
+				intersects = tree[centerpoint] #all intervals intersecting with current centerpoint
+				local_depth = len(intersects) #depth at centerpoint
+				#if current depth highest seen, keep it
+				if local_depth > max_depth:
+					max_depth = local_depth
+					max_centerpoint = centerpoint
+					#max_intersects = intersects
+			#remove all intervals overlapping with centerpoint at greatest depth
+			del tree[max_centerpoint]
+			
+			#add to breakpoints
+			breaks.append(max_centerpoint)
+			#print("Selected breakpoint:",max_centerpoint)
+	return(breaks)
+
+#TODO:try to speed this up. 13% of total runtime
+def findFGTs(tree, nodes, params, k_lookup):
+	start = 0
+	end = 1
+	count=0
+	index = 0
+	while start <= len(nodes):
+		#print("Start=",start)
+		#print("End=",end)
+		if end >= len(nodes):
+			start = start + 1
+			end= start + 1
+			continue
+		#Check if start and end are compatible
+		compat = nodes[start].FGT(nodes[end], params.rule)
+		if compat == True: #if compatible, increment end and continue 
+			#print("Compatible! Checking next SNP")
+			end+=1
+			continue
+		else: #if FGT fails, submit interval to IntervalTree, and increment start
+			#print("Not compatible!")
+			interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end, index))
+			k_lookup[index] = interval #k-layer for this interval
+			tree.add(interval) #add interval from start.position to end.position
+			index +=1 #increment key, so all will be unique
+			start = start+1 #move start to next SNP 
+			end = start+1 #reset end to neighbor of new start
+
+def fetchNodes(records, this_chrom):
+	nodes = list()
+	miss_skips = 0
+	allel_skips = 0
+	#c=0
+	for rec in records:
+		if rec.CHROM != this_chrom:
+			continue
+		else:
+			#if this SNP
+			if rec.is_snp and not rec.is_monomorphic:
+				if rec.num_called < 4:
+					miss_skips +=1
+				elif len(rec.alleles) > 2:
+					allel_skips +=1
+				else:
+					#print(rec.samples)
+					samps = [s.gt_type for s in rec.samples]
+					nodes.append(SNPcall(rec.POS, samps))
+					#c+=1
+		# if c>5000:
+		# 	break
+	if miss_skips > 0:
+		print("\tChromosome",this_chrom,"skipped",str(miss_skips),"sites for too much missing data.")
+	if allel_skips > 0:
+		print("\tChromosome",this_chrom,"skipped",str(allel_skips),"sites for >2 alleles.")
+	return(nodes)
 
 
 #Function to write list of regions tuples, in GATK format
@@ -275,11 +297,13 @@ class SNPcall():
 	def __lt__(self, other):
 		return(self.position < other.position)
 
+	#TODO:try to speed this up. Calls to this take 40% of total run
 	def FGT(self, other, rule):
 		#print("Four gamete test for",self.position,"and",other.position)
 		gametes = [0,0,0,0] #00, 01, 10, 11
 		hets = list()
 		
+		#TODO: This line takes a long time. 21% of total runtime 
 		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if None not in [gt, other.calls[i]]]
 		#print(genotypes)
 		if (all(g in [0,1,2] for g in genotypes)): #make sure gt_types are valid
@@ -324,6 +348,7 @@ class SNPcall():
 		else:
 			return(True)
 	
+	#TODO:calls to this take 14% of total runtime
 	@staticmethod
 	def hapCheck(geno):
 		if geno[0] == geno[1] == 0:
