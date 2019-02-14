@@ -131,7 +131,7 @@ def main():
 					continue
 				else: #if FGT fails, submit interval to IntervalTree, and increment start
 					#print("Not compatible!")
-					interval = Interval(nodes[start].position, nodes[end].position, end-start)
+					interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end))
 					k_lookup[count] = interval #k-layer for this interval
 					tree.add(interval) #add interval from start.position to end.position
 					count +=1 #increment key, so all will be unique
@@ -145,14 +145,19 @@ def main():
 			#NOTE: Over-rode the __lt__ function for Intervals: see __main__ below
 			#otherwise this would sort on start position!
 			sorted_k = sorted(k_lookup.items(), key=operator.itemgetter(1)) #gets ordered tuples
-			#print(sorted_k)
+			print(sorted_k)
 			
 			#start resolving from lowest k
-			
-			
-			#remove resolved from tree 
-			#pop off dictionionary 
-			#for each interval: ask if still in dictionary 
+			for i in sorted_k:
+				this_interval = i[1]
+				#get all intervals overlapping range(start:end)
+				overlaps = tree[this_interval: this_interval]
+				#query each centerpoint
+				#remove all intervals overlapping with centerpoint at greatest depth
+				#remove resolved from tree 
+				#pop off dictionionary 
+				#for each interval: ask if still in dictionary 
+				sys.exit()
 			
 		else:
 			print("No passing variants found for chromosome",this_chrom,"")
@@ -378,6 +383,32 @@ class parseArgs():
 ###overriding __lt__ method for Interval
 def IntervalSort(self,other):
 	return(self.data < other.data)
+
+class IntervalData():
+	def __init__(self, start, end):
+		self.start = start
+		self.end = end
+		self.k = end-start
+		
+	def __lt__(self, other):
+		return(self.k < other.k)
+	
+	def getK(self):
+		return(self.k)
+		
+	def getStart(self):
+		return(self.start)
+		
+	def getEnd(self):
+		return(self.end)
+	
+	def __repr__(self):
+		return(str(self.k))
+	
+	def __str__(self):
+		s="IntervalData.k="+str(self.k)
+		return(s)
+
 
 #Call main function
 if __name__ == '__main__':
