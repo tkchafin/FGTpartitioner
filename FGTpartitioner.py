@@ -352,7 +352,7 @@ class parseArgs():
 	def __init__(self):
 		#Define options
 		try:
-			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:h', \
+			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:h', \
 			[])
 		except getopt.GetoptError as err:
 			print(err)
@@ -362,6 +362,7 @@ class parseArgs():
 		self.vcf=None
 		self.rule=1
 		self.chrom=None
+		self.out="regions.out"
 
 		#First pass to see if help menu was called
 		for o, a in options:
@@ -380,6 +381,8 @@ class parseArgs():
 				self.rule=int(arg)
 			elif opt == 'c':
 				self.chrom = arg
+			elif opt == "o":
+				self.out = arg
 			elif opt in ('h'):
 				pass
 			else:
@@ -409,6 +412,7 @@ class parseArgs():
 			   2: Fail FGT if heterozygote might be incompatible
 			   3: Pass FGT if heterozygote might be compatible
 		-c	: Chromosome or contig in VCF to partition
+		-o	: Output file name [default: regions.out]
 		-h	: Displays help menu
 
 """)
