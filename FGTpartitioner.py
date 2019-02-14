@@ -131,7 +131,7 @@ def main():
 					continue
 				else: #if FGT fails, submit interval to IntervalTree, and increment start
 					#print("Not compatible!")
-					interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end))
+					interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end, index))
 					k_lookup[count] = interval #k-layer for this interval
 					tree.add(interval) #add interval from start.position to end.position
 					count +=1 #increment key, so all will be unique
@@ -151,8 +151,21 @@ def main():
 			for i in sorted_k:
 				this_interval = i[1]
 				#get all intervals overlapping range(start:end)
-				overlaps = tree[this_interval: this_interval]
+				#overlaps = tree[this_interval.begin: this_interval.end]
 				#query each centerpoint
+				global_center = (nodes[this_interval.data.start] + nodes[this_interval.data.end]) / 2
+				max_centerpoint = global_center
+				max_depth = len(tree[global_center])
+				print("K=",this_interval.data.k)
+				for check_start in range(this_interval.data.start,this_interval.data.end-1):
+					print(check_start)
+					centerpoint = (nodes[check_start].position + nodes[check_start+1].position) / 2
+					intersects = tree[centerpoint] #all intervals intersecting with current centerpoint
+					local_depth = len(intersects) #depth at centerpoint
+					#if current depth highest seen, keep it
+					if len(intersects) > max_depth:
+						max_depth = len(intersects)
+						max_centerpoint = centerpoint
 				#remove all intervals overlapping with centerpoint at greatest depth
 				#remove resolved from tree 
 				#pop off dictionionary 
@@ -198,6 +211,7 @@ Solving algorithm:
 class SNPcall():
 	def __init__(self, pos, samps):
 		self.position = int(pos)
+		self.POS=self.position
 		self.calls = list(samps)
 	
 	def __lt__(self, other):
@@ -385,9 +399,10 @@ def IntervalSort(self,other):
 	return(self.data < other.data)
 
 class IntervalData():
-	def __init__(self, start, end):
+	def __init__(self, start, end, index):
 		self.start = start
 		self.end = end
+		self.index=index
 		self.k = end-start
 		
 	def __lt__(self, other):
@@ -401,9 +416,12 @@ class IntervalData():
 		
 	def getEnd(self):
 		return(self.end)
+		
+	def getIndex(self):
+		return(self.index)
 	
 	def __repr__(self):
-		return(str(self.k))
+		return("IntervalData()")
 	
 	def __str__(self):
 		s="IntervalData.k="+str(self.k)
