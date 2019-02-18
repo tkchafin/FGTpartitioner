@@ -200,6 +200,7 @@ def findFGTs(tree, nodes, params, k_lookup):
 			start = start + 1
 			end= start + 1
 			continue
+		#print("Comparing:",nodes[start].position,"and",nodes[end].position)
 		#Check if start and end are compatible
 		compat = nodes[start].FGT(nodes[end], params.rule)
 		if compat == True: #if compatible, increment end and continue 
@@ -211,6 +212,7 @@ def findFGTs(tree, nodes, params, k_lookup):
 			interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end, index))
 			k_lookup[index] = interval #k-layer for this interval
 			tree.add(interval) #add interval from start.position to end.position
+			#print(interval)
 			index +=1 #increment key, so all will be unique
 			start = start+1 #move start to next SNP 
 			end = start+1 #reset end to neighbor of new start
@@ -223,7 +225,7 @@ def fetchNodes(records, this_chrom):
 	for rec in records:
 		#if this SNP
 		if rec.is_snp:
-			if rec.num_called < 4:
+			if rec.num_called < 2:
 				miss_skips +=1
 			elif len(rec.alleles) > 2:
 				allel_skips +=1
@@ -265,10 +267,11 @@ def write_regions(f, r):
 def getRegions(breaks, lengths):
 	ret = list()
 	for chrom in breaks.keys():
+		sorted_breaks = sorted(breaks[chrom])
 		if len(breaks[chrom]) == 1:
 			ret.append(tuple([chrom, 1, int(round(breaks[chrom][0]))]))
+			ret.append(tuple([chrom, int(math.ceil(sorted_breaks[-1])), int(lengths[chrom])]))
 		elif len(breaks[chrom]) > 1:
-			sorted_breaks = sorted(breaks[chrom])
 			first = tuple([chrom, 1, int(round(sorted_breaks[0]))])
 			ret.append(first)
 			

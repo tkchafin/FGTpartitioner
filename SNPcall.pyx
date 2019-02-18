@@ -2,7 +2,6 @@
 
 import random
 
-
 cdef class SNPcall(object):
 	cdef public:
 		int position
@@ -23,14 +22,18 @@ cdef class SNPcall(object):
 		#print("Four gamete test for",self.position,"and",other.position)
 		cdef list gametes = [0,0,0,0] #00, 01, 10, 11
 		cdef list hets = list()
+		cdef int gamete
 		
 		#TODO: This line takes a long time. 21% of total runtime 
 		valid =set([0, 1, 2])
-		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if gt and other.calls[i] in valid]
+		#cdef list genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if gt and other.calls[i] in valid]
+		cdef list genotypes = [[x,other.calls[i]] for i,x in enumerate(self.calls) if set([x, other.calls[i]]).issubset(valid)]
+
+		#print("geno is:",genotypes)
 
 		for geno in genotypes:
 			gamete = self.hapCheck(geno)
-			if gamete:
+			if gamete >= 0:
 				gametes[gamete] = 1
 			else:
 				if 1 in geno:
@@ -57,6 +60,7 @@ cdef class SNPcall(object):
 								gametes[self.hapCheck([i,j])] = 1
 					elif rule == 3:
 						hets.append(geno)
+		#print("found gametes:",gametes)
 		if sum(gametes) == 4:
 			return(False) #return False if not compatible
 		elif hets:
@@ -84,12 +88,15 @@ cdef class SNPcall(object):
 			elif geno[1] ==2:
 				return(3)
 			else:
-				return(None)
+				return(-9)
 		else:
-			return(None)
+			return(-9)
 	
 	def optimisticFGT(self, seen, hets):
-		possibilities = list()
+		cdef list possibilities = list()
+		cdef list locals = list()
+		cdef possible1 = list()
+		cdef possible2 = list()
 		for het in hets:
 			locals = list()
 			possible1 = list()
