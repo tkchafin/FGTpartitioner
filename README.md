@@ -6,7 +6,9 @@ Input is a VCF file, which can represent unphased genotypes, and output is a par
 ### Dependencies
 - Python >3
 - pyVCF
+- pySAM
 - intervaltree
+- Cython > 0.27
 
 The easiest way to install the dependencies is through conda:
 ```
