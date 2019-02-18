@@ -93,6 +93,7 @@ def main():
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
 			
+			#call parallel worker runs here if params.threads>1
 			findFGTs(tree,nodes,params,k_lookup)
 
 			print("\tFound ",len(tree),"intervals.")
@@ -290,7 +291,7 @@ class parseArgs():
 	def __init__(self):
 		#Define options
 		try:
-			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:h', \
+			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:t:h', \
 			[])
 		except getopt.GetoptError as err:
 			print(err)
@@ -301,6 +302,7 @@ class parseArgs():
 		self.rule=1
 		self.chrom=None
 		self.out="regions.out"
+		self.threads=1
 
 		#First pass to see if help menu was called
 		for o, a in options:
@@ -321,6 +323,8 @@ class parseArgs():
 				self.chrom = arg
 			elif opt == "o":
 				self.out = arg
+			elif opt == "t":
+				self.threads=int(arg)
 			elif opt in ('h'):
 				pass
 			else:
@@ -351,6 +355,7 @@ class parseArgs():
 			   3: Pass FGT if heterozygote might be compatible
 		-c	: Chromosome or contig in VCF to partition
 		-o	: Output file name [default: regions.out]
+		-t	: Number of threads for parallel execution
 		-h	: Displays help menu
 
 """)
