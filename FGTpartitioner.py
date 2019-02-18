@@ -15,6 +15,8 @@ from SNPcall import SNPcall
 from intervaltree import Interval, IntervalTree
 from collections import OrderedDict 
 
+import multiprocessing
+
 def main():
 	params = parseArgs()
 
