@@ -90,7 +90,6 @@ def main():
 			print("Not enough records found for chromosome:",this_chrom)
 		else:
 			nodes = fetchNodes(records, this_chrom)
-
 		
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
@@ -204,6 +203,7 @@ def findFGTs(tree, nodes, params, k_lookup):
 			continue
 		#Check if start and end are compatible
 		compat = nodes[start].FGT(nodes[end], params.rule)
+		compat = nodes[start].FGT2(nodes[end], params.rule)
 		if compat == True: #if compatible, increment end and continue 
 			#print("Compatible! Checking next SNP")
 			end+=1
@@ -221,24 +221,21 @@ def fetchNodes(records, this_chrom):
 	nodes = list()
 	miss_skips = 0
 	allel_skips = 0
-	#c=0
+	c=0
 	for rec in records:
-		if rec.CHROM != this_chrom:
-			continue
-		else:
-			#if this SNP
-			if rec.is_snp and not rec.is_monomorphic:
-				if rec.num_called < 4:
-					miss_skips +=1
-				elif len(rec.alleles) > 2:
-					allel_skips +=1
-				else:
-					#print(rec.samples)
-					samps = [s.gt_type for s in rec.samples]
-					nodes.append(SNPcall(rec.POS, samps))
-					#c+=1
-		# if c>5000:
-		# 	break
+		#if this SNP
+		if rec.is_snp:
+			if rec.num_called < 4:
+				miss_skips +=1
+			elif len(rec.alleles) > 2:
+				allel_skips +=1
+			else:
+				#print(rec.samples)
+				samps = [s.gt_type for s in rec.samples]
+				nodes.append(SNPcall(rec.POS, samps))
+				c+=1
+		if c>1000:
+			break
 	if miss_skips > 0:
 		print("\tChromosome",this_chrom,"skipped",str(miss_skips),"sites for too much missing data.")
 	if allel_skips > 0:
@@ -304,11 +301,9 @@ class SNPcall():
 		hets = list()
 		
 		#TODO: This line takes a long time. 21% of total runtime 
-		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if None not in [gt, other.calls[i]]]
-		#print(genotypes)
-		if (all(g in [0,1,2] for g in genotypes)): #make sure gt_types are valid
-			print("Illegal genotype:",genotypes)
-			return(None)
+		valid =set([0, 1, 2])
+		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if gt and other.calls[i] in valid]
+
 		for geno in genotypes:
 			gamete = self.hapCheck(geno)
 			if gamete:
@@ -347,20 +342,77 @@ class SNPcall():
 				return(True)
 		else:
 			return(True)
+
+##############################################################################
+
+	#TODO:try to speed this up. Calls to this take 40% of total run
+	def FGT2(self, other, rule):
+		#print("Four gamete test for",self.position,"and",other.position)
+		gametes = [0,0,0,0] #00, 01, 10, 11
+		hets = list()
+		
+		#TODO: This line takes a long time. 21% of total runtime 
+		valid =set([0, 1, 2])
+		genotypes = [[gt, other.calls[i]] for i, gt in enumerate(self.calls) if gt and other.calls[i] in valid]
+
+		for geno in genotypes:
+			gamete = self.hapCheck(geno)
+			if gamete:
+				gametes[gamete] = 1
+			else:
+				if 1 in geno:
+					if rule == 1:
+						if geno[0] == 1:
+							geno[0] = random.choice([0,2])
+						if geno[1] == 1:
+							geno[1] = random.choice([0,2])
+						#print(geno)
+						gametes[self.hapCheck(geno)] = 1
+					elif rule == 2:
+						possible1 = list()
+						possible2 = list()
+						if geno[0] == 1:
+							possible1 = [0,2]
+						else:
+							possible1 = [geno[0]]
+						if geno[1] == 1:
+							possible2 = [0,2]
+						else:
+							possible2 = [geno[1]]
+						for i in possible1:
+							for j in possible2:
+								gametes[self.hapCheck([i,j])] = 1
+					elif rule == 3:
+						hets.append(geno)
+		if sum(gametes) == 4:
+			return(False) #return False if not compatible
+		elif hets:
+			if not self.optimisticFGT(gametes, hets):
+				return(False) #return false if not compatible 
+			else:
+				return(True)
+		else:
+			return(True)
+############################################################################
 	
-	#TODO:calls to this take 14% of total runtime
 	@staticmethod
 	def hapCheck(geno):
-		if geno[0] == geno[1] == 0:
-			return(0)
-		elif geno[0] == geno[1] == 2:
-			return(3)
-		elif geno[0] == 0 and geno[1] == 2:
-			return(1)
-		elif geno[0] == 2 and geno[1] == 0:
-			return(2)
+		if geno[0] == 0:
+			if geno[1] == 0:
+				return(0)
+			elif geno[1] ==2:
+				return(1)
+			else:
+				return(None)
+		elif geno[0] == 2:
+			if geno[1] == 0:
+				return(2)
+			elif geno[1] ==2:
+				return(3)
+			else:
+				return(None)
 		else:
-			return None
+			return(None)
 	
 	def optimisticFGT(self, seen, hets):
 		possibilities = list()
