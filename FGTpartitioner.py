@@ -15,8 +15,6 @@ from SNPcall import SNPcall
 from intervaltree import Interval, IntervalTree
 from collections import OrderedDict 
 
-import line_profiler
-
 def main():
 	params = parseArgs()
 
@@ -234,7 +232,7 @@ def fetchNodes(records, this_chrom):
 				samps = [s.gt_type for s in rec.samples]
 				nodes.append(SNPcall(rec.POS, samps))
 				c+=1
-		if c>1000:
+		if c>5000:
 			break
 	if miss_skips > 0:
 		print("\tChromosome",this_chrom,"skipped",str(miss_skips),"sites for too much missing data.")

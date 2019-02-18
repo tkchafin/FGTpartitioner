@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
 import random
-import pyximport; pyximport.install()
 
-class SNPcall():
+
+cdef class SNPcall(object):
+	cdef public:
+		int position
+		list calls
+
 	def __init__(self, pos, samps):
 		self.position = int(pos)
-		self.POS=self.position
 		self.calls = list(samps)
 	
 	def __lt__(self, other):
@@ -18,8 +21,8 @@ class SNPcall():
 	#TODO:try to speed this up. 32% of runtime currently
 	def FGT(self, other, rule):
 		#print("Four gamete test for",self.position,"and",other.position)
-		gametes = [0,0,0,0] #00, 01, 10, 11
-		hets = list()
+		cdef list gametes = [0,0,0,0] #00, 01, 10, 11
+		cdef list hets = list()
 		
 		#TODO: This line takes a long time. 21% of total runtime 
 		valid =set([0, 1, 2])
