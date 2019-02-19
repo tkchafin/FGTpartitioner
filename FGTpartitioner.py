@@ -240,14 +240,20 @@ def findFGTs_worker(local_nodes, params, k_lookup, proc_number):
 		#initialize local random number seed
 		random.seed(random.randrange(sys.maxsize)+proc_number)
 
+		if proc_number != 2:
+			return(0)
+
 		while start <= maximum:
-			#print("Start=",start)
-			#print("End=",end)
+			print("Start=",start)
+			print("End=",end)
 			if end >= maximum:
 				start = start + skip
 				end= start + 1
+				# if start <= maximum:
+				# 	break
+				# else:
 				continue
-			#print("Comparing:",nodes[start].position,"and",nodes[end].position)
+			print("Comparing:",local_nodes[start].position,"and",local_nodes[end].position)
 			#Check if start and end are compatible
 			compat = local_nodes[start].FGT(local_nodes[end], params.rule)
 			if compat == True: #if compatible, increment end and continue
@@ -258,7 +264,7 @@ def findFGTs_worker(local_nodes, params, k_lookup, proc_number):
 				#print("Not compatible!")
 				interval = Interval(local_nodes[start].position, local_nodes[end].position, IntervalData(start, end, index))
 				k_lookup[index] = interval #k-layer for this interval
-				local_tree.add(interval) #add interval from start.position to end.position
+				#local_tree.add(interval) #add interval from start.position to end.position
 				print(interval)
 				index +=skip #increment key, so all will be unique
 				start = start+skip #move start to next SNP
