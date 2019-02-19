@@ -4,11 +4,11 @@ Partitions an alignment using the 4-gamete test
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
 
 ### Dependencies
-- Python >3
-- pyVCF
+Requires Python 3 and the following modules:
+- pyVCF 
 - pySAM
 - intervaltree
-- Cython > 0.27
+- Cython > 0.27 
 
 The easiest way to install the dependencies is through conda:
 ```
