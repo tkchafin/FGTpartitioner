@@ -13,7 +13,7 @@ import operator
 import intervaltree
 from SNPcall import SNPcall
 from intervaltree import Interval, IntervalTree
-from collections import OrderedDict 
+from collections import OrderedDict
 
 import multiprocessing
 
@@ -29,7 +29,7 @@ def main():
 		print("Only reading chromosome:",params.chrom)
 	else:
 		print("Reading all chromosomes from VCF...")
-	
+
 	for c,s in vfh.contigs.items():
 		if params.chrom and s.id != params.chrom:
 			continue
@@ -38,7 +38,7 @@ def main():
 	if len(contigs) < 1:
 		print("No chromosomes found. Please check your input or verify that options provided with -c are correct")
 		sys.exit(1)
-		
+
 	'''
 	1. for each chromosome (or 1 if region is set)
 	2. build list where value=SeqRecord
@@ -47,8 +47,8 @@ def main():
 		k_lookup[index] = k (order, or number of nodes encompassed)
 	4. after examining last node, resolve tree
 		from smallest k to largest k. Maybe sort k_lookup by value
-	
-	tree resolution: 
+
+	tree resolution:
 	For each layer from k=1 to kmax:
 		for each interval in layer k
 			query center point of interval to get interval depth
@@ -57,7 +57,7 @@ def main():
 				place break at centerpoint which maximizes depth, or center of maximum depth region
 				delete all intervals intersecting with breakpoint
 	'''
-	
+
 	print("Diploid resolution strategy: ", end="")
 	if params.rule==1:
 		print("Random", end="")
@@ -69,12 +69,12 @@ def main():
 		print("Invalid!",end="")
 		sys.exit(1)
 	print(" (change with -r)\n")
-	
+
 	breakpoints = collections.OrderedDict()
-	
-	print("Starting FGT sweeps:\n")
+
+	print("Starting FGT sweeps.....\n")
 	#for each chromosome
-	for this_chrom in contigs: 
+	for this_chrom in contigs:
 		print("Performing FGT check on:", this_chrom)
 		#initialize data structures
 		tree = IntervalTree()
@@ -84,48 +84,52 @@ def main():
 		stop =1
 		index=1 #keys for intervals
 		breaks = list()
-		
-		#Gather relevant SNP calls from the VCF 
+
+		#Gather relevant SNP calls from the VCF
 		records = vfh.fetch(this_chrom)
 		if not records:
 			print("Not enough records found for chromosome:",this_chrom)
 		else:
 			nodes = fetchNodes(records, this_chrom)
-		
+
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
-			
+
 			#call parallel worker runs here if params.threads>1
-			findFGTs(tree,nodes,params,k_lookup)
+			print("\tSeeking intervals across",this_chrom,"using",params.threads,"threads.")
+			if params.threads > 1:
+				findFGTs_parallel(tree, nodes, params, k_lookup)
+			else:
+				findFGTs(tree,nodes,params,k_lookup)
 
 			print("\tFound ",len(tree),"intervals.")
 			#print(tree)
-			
+
 			#order k_lookup by k
 			#NOTE: Over-rode the __lt__ function for Intervals: see __main__ below
 			#otherwise this would sort on start position!
 			sorted_k = sorted(k_lookup.items(), key=operator.itemgetter(1)) #gets ordered tuples
 			#print(sorted_k)
-			
+
 			#start resolving from lowest k
 			print("\tResolving FGT incompatibilities...")
 			breaks = resolveFGTs(tree, sorted_k, nodes)
 
 		else:
 			print("\tNo passing variants found for chromosome",this_chrom,"")
-		
+
 		#submit all selection breakpoints
 		breakpoints[this_chrom] = breaks
 		print("\tFound",len(breaks),"most parsimonious breakpoints.")
-	
-	print("\nWriting regions to file (format: chromosome:start-end)")		
+
+	print("\nWriting regions to file (format: chromosome:start-end)")
 	regions = getRegions(breakpoints, contigs)
-	
+
 	if len(regions) > 0:
 		write_regions(params.out, regions)
 	else:
 		print("No regions found.")
-	
+
 	print("Done\n")
 
 
@@ -138,7 +142,7 @@ Processing algorithm:
 	k = order of overlap (number of SNP nodes encompassed)
 	for each SNP i, explore right until finding minimum-k conflict
 	Add interval to data structure, increment i and continue
-	
+
 Data structure:
 	Interval tree:
 	Interval tree, but intervals indexed by k
@@ -184,11 +188,12 @@ def resolveFGTs(tree, sorted_k, nodes):
 					#max_intersects = intersects
 			#remove all intervals overlapping with centerpoint at greatest depth
 			del tree[max_centerpoint]
-			
+
 			#add to breakpoints
 			breaks.append(max_centerpoint)
 			#print("Selected breakpoint:",max_centerpoint)
 	return(breaks)
+
 
 #TODO:try to speed this up. 13% of total runtime
 def findFGTs(tree, nodes, params, k_lookup):
@@ -206,7 +211,7 @@ def findFGTs(tree, nodes, params, k_lookup):
 		#print("Comparing:",nodes[start].position,"and",nodes[end].position)
 		#Check if start and end are compatible
 		compat = nodes[start].FGT(nodes[end], params.rule)
-		if compat == True: #if compatible, increment end and continue 
+		if compat == True: #if compatible, increment end and continue
 			#print("Compatible! Checking next SNP")
 			end+=1
 			continue
@@ -217,8 +222,22 @@ def findFGTs(tree, nodes, params, k_lookup):
 			tree.add(interval) #add interval from start.position to end.position
 			#print(interval)
 			index +=1 #increment key, so all will be unique
-			start = start+1 #move start to next SNP 
+			start = start+1 #move start to next SNP
 			end = start+1 #reset end to neighbor of new start
+
+def findFGTs_parallel(tree, nodes, params, k_lookup):
+	print("parallel")
+
+	#calculate skip sizes for each process
+	#e.g. process 1 of 4 runs FGT chackes for SNP 1, 5, 9, etc
+
+	#for each process call, generate:
+	#deep copies of k_lookup table
+
+
+	sys.exit(1)
+
+
 
 def fetchNodes(records, this_chrom):
 	nodes = list()
@@ -277,16 +296,16 @@ def getRegions(breaks, lengths):
 		elif len(breaks[chrom]) > 1:
 			first = tuple([chrom, 1, int(round(sorted_breaks[0]))])
 			ret.append(first)
-			
+
 			for idx, br in enumerate(sorted_breaks[1:-1]):
 				ret.append(tuple([chrom, int(round(sorted_breaks[idx])), int(math.ceil(sorted_breaks[idx+1]))]))
-			
-			last = tuple([chrom, int(math.ceil(sorted_breaks[-1])), int(lengths[chrom])])	
+
+			last = tuple([chrom, int(math.ceil(sorted_breaks[-1])), int(lengths[chrom])])
 			ret.append(last)
 		else:
 			ret.append([chrom, 1, int(lengths[chrom])])
 	return(ret)
-		
+
 
 #Object to parse command-line arguments
 class parseArgs():
@@ -346,7 +365,7 @@ class parseArgs():
 		print ("\nFGTpartitioner.py\n")
 		print ("Contact:Tyler K. Chafin, tylerkchafin@gmail.com")
 		print ("\nUsage: ", sys.argv[0], "-v <input.vcf> -r <1|2|3> [-c chr1]\n")
-		print ("Description: Computes minimal breakpoints to partition chromosomes into recombination-free blocks")
+		print ("Description: Computes parsimonious breakpoints to partition chromosomes into recombination-free blocks")
 
 		print("""
 	Arguments:
@@ -359,7 +378,6 @@ class parseArgs():
 		-o	: Output file name [default: regions.out]
 		-t	: Number of threads for parallel execution
 		-h	: Displays help menu
-
 """)
 		print()
 		sys.exit()
@@ -374,25 +392,25 @@ class IntervalData():
 		self.end = end
 		self.index=index
 		self.k = end-start
-		
+
 	def __lt__(self, other):
 		return(self.k < other.k)
-	
+
 	def getK(self):
 		return(self.k)
-		
+
 	def getStart(self):
 		return(self.start)
-		
+
 	def getEnd(self):
 		return(self.end)
-		
+
 	def getIndex(self):
 		return(self.index)
-	
+
 	def __repr__(self):
 		return("IntervalData()")
-	
+
 	def __str__(self):
 		s="IntervalData.k="+str(self.k)
 		return(s)
