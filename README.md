@@ -19,6 +19,10 @@ You will additionally need tabix installed to pre-process your input file:
 conda install -c bioconda tabix 
 ```
 
+```
+python setup.py build_ext --inplace
+```
+
 
 ### Inputs
 
