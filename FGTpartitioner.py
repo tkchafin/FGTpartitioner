@@ -14,7 +14,7 @@ import intervaltree
 from SNPcall import SNPcall
 from intervaltree import Interval, IntervalTree
 from collections import OrderedDict
-
+from functools import partial
 import multiprocessing
 
 def main():
@@ -225,14 +225,83 @@ def findFGTs(tree, nodes, params, k_lookup):
 			start = start+1 #move start to next SNP
 			end = start+1 #reset end to neighbor of new start
 
+#findFGTs function for the parallel call
+def findFGTs_worker(local_nodes, params, k_lookup, proc_number):
+	print("proc")
+	try:
+		start = 0 + proc_number #everyprocess starts at an offset
+		skip = params.threads #every process checks for FGTs at an interval
+		end = 1
+		count=0
+		index = 0 + proc_number
+		local_tree = IntervalTree()
+		maximum = len(local_nodes)
+
+		#initialize local random number seed
+		random.seed(random.randrange(sys.maxsize)+proc_number)
+
+		while start <= maximum:
+			#print("Start=",start)
+			#print("End=",end)
+			if end >= maximum:
+				start = start + skip
+				end= start + 1
+				continue
+			#print("Comparing:",nodes[start].position,"and",nodes[end].position)
+			#Check if start and end are compatible
+			compat = local_nodes[start].FGT(local_nodes[end], params.rule)
+			if compat == True: #if compatible, increment end and continue
+				#print("Compatible! Checking next SNP")
+				end+=1
+				continue
+			else: #if FGT fails, submit interval to IntervalTree, and increment start
+				#print("Not compatible!")
+				interval = Interval(local_nodes[start].position, local_nodes[end].position, IntervalData(start, end, index))
+				k_lookup[index] = interval #k-layer for this interval
+				local_tree.add(interval) #add interval from start.position to end.position
+				print(interval)
+				index +=skip #increment key, so all will be unique
+				start = start+skip #move start to next SNP
+				end = start+1 #reset end to neighbor of new start
+
+		#return local_tree
+		return(local_tree)
+
+	except Exception as e:
+		raise Exception(e)
+
+
 def findFGTs_parallel(tree, nodes, params, k_lookup):
 	print("parallel")
 
 	#calculate skip sizes for each process
 	#e.g. process 1 of 4 runs FGT chackes for SNP 1, 5, 9, etc
 
-	#for each process call, generate:
-	#deep copies of k_lookup table
+	#for each process call, generate: deep copies of nodes
+	#local_nodes = list()
+	proc_numbers = list()
+	for i in range(0,params.threads):
+		proc_numbers.append(i)
+		#local_nodes.append()
+
+	#multiprocess call
+	print("multiprocess call for processes:",proc_numbers)
+	try:
+		print("try")
+		with multiprocessing.Pool(processes=params.threads) as pool:
+			print("with")
+			func = partial(findFGTs_worker, nodes, params, k_lookup)
+			results = pool.map(func, proc_numbers)
+			print(results)
+	except Exception as e:
+		pool.close()
+		raise Exception(e)
+		sys.exit(e)
+
+	pool.close()
+	pool.join()
+
+	sys.stdout.flush()
 
 
 	sys.exit(1)
