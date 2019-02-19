@@ -9,10 +9,11 @@ Requires Python 3 and the following modules:
 - pySAM
 - intervaltree
 - Cython > 0.27 
+- multiprocess
 
 The easiest way to install the dependencies is through conda:
 ```
-conda install -c conda-forge -c bioconda pyvcf intervaltree
+conda install -c conda-forge -c bioconda pyvcf intervaltree cython multiprocess pysam
 ```
 You will additionally need tabix installed to pre-process your input file:
 ```
