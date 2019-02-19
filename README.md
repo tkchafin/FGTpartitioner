@@ -11,15 +11,16 @@ Requires Python 3 and the following modules:
 - Cython > 0.27 
 - multiprocess
 
-The easiest way to install the dependencies is through conda:
+You will additionally need tabix installed to pre-process your input file.
+
+The easiest way to install all of the dependencies is through conda:
 ```
-conda install -c conda-forge -c bioconda pyvcf intervaltree cython multiprocess pysam
-```
-You will additionally need tabix installed to pre-process your input file:
-```
-conda install -c bioconda tabix 
+conda install -c conda-forge -c bioconda pyvcf intervaltree cython multiprocess pysam tabix
 ```
 
+If you don't have conda installed, go [here](https://conda.io/en/latest/miniconda.html) and choose the correct Python3 installer for your system.
+
+To prep FGTpartioner for running, you will first need to pre-compile the cythonized portions of the code:
 ```
 python setup.py build_ext --inplace
 ```
