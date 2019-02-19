@@ -20,11 +20,16 @@ conda install -c conda-forge -c bioconda pyvcf intervaltree cython multiprocess 
 
 If you don't have conda installed, go [here](https://conda.io/en/latest/miniconda.html) and choose the correct Python3 installer for your system.
 
+### Installation
+
 To prep FGTpartioner for running, you will first need to pre-compile the cythonized portions of the code:
 ```
 python setup.py build_ext --inplace
 ```
-
+After that, FGTpartitioner is ready to run. You can view the help menu by typing:
+```
+./FGTpartitioner.py -h
+```
 
 ### Inputs
 
