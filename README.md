@@ -1,7 +1,9 @@
 # FGTpartitioner
-Partitions an alignment using the 4-gamete test
+Partitions genome data using the 4-gamete test into a minimal number of blocks which contain no recombinations (=FGT conflicts)
 
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
+
+Status: FGTpartitioner is working properly, and find the same FGT conflicts as other programs that I have tested. However, it is currently very slow! I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. 
 
 ### Dependencies
 Requires Python 3 and the following modules:
@@ -11,7 +13,7 @@ Requires Python 3 and the following modules:
 - Cython > 0.27 
 - multiprocess
 
-You will additionally need tabix installed to pre-process your input file.
+You will additionally need tabix installed to clock-compress and index your VCF file (which enables me to parse it more quickly).
 
 The easiest way to install all of the dependencies is through conda:
 ```
