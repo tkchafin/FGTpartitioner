@@ -69,6 +69,8 @@ def main():
 		print("Invalid!",end="")
 		sys.exit(1)
 	print(" (change with -r)\n")
+	print("Number of process threads:",params.threads,"(change with -t)")
+	print("Minimum genotyped individuals to consider locus:",params.minInd,"(change w/ -m)")
 
 	breakpoints = collections.OrderedDict()
 
