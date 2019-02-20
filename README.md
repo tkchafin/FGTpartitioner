@@ -3,7 +3,8 @@ Partitions genome data using the 4-gamete test into a minimal number of blocks w
 
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
 
-Status: FGTpartitioner is working properly, and find the same FGT conflicts as other programs that I have tested. However, it is currently very slow! I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. 
+### Status
+FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. However, it is currently very slow! I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. 
 
 ### Dependencies
 Requires Python 3 and the following modules:
@@ -35,7 +36,22 @@ After that, FGTpartitioner is ready to run. You can view the help menu by typing
 
 ### Inputs
 
-Coming Soon
+The input file (provided via -v) is a standard VCF file, including contig lengths in the ##contig headers. You can find an example of a VCF file in the examples/ directory. In short, a minimally conforming VCF should have the following structure:
+```
+##fileformat=VCFv4.2
+##contig=<ID=chr1.scaffold1,length=10000>
+##FORMAT=<ID=GT,Number=1,Type=Integer,Description="Genotype">
+##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype Probabilities">
+##FORMAT=<ID=PL,Number=G,Type=Float,Description="Phred-scaled Genotype Likelihoods">
+#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  SAMP001 SAMP002 SAMP003 SAMP004
+chr1.scaffold1  100     rs11449 G       A       .       PASS    .       GT      0/0     0/0     1/1     1/1
+chr1.scaffold1  200     rs11449 T       A       .       PASS    .       GT      0/0     1/1     0/0     1/1
+chr1.scaffold1  300 rs84825 A   T       .       PASS    .       GT      0/0     1/1     1/1     1/1
+chr1.scaffold1  400 rs84825 A   G       .       PASS    .       GT      1/1
+...
+...
+...
+```
 
 You will need to block-compress and index your VCF file to speed up parsing:
 ```
