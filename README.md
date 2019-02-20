@@ -53,7 +53,7 @@ chr1.scaffold1  400 rs84825 A   G       .       PASS    .       GT      1/1
 ...
 ```
 
-You will need to block-compress and index your VCF file to speed up parsing:
+You will also need to block-compress and index your VCF file to speed up parsing:
 ```
 #Run bgzip (NOT gzip) to compress your joint VCF file
 bgzip file.vcf
@@ -61,8 +61,13 @@ bgzip file.vcf
 #tabix to index it
 tabix -h -f -p vcf file.vcf.gz
 ```
+The result will be a binary compressed-VCF ".vcf.gz" file, and a ".vcf.gz.tbi" index file. The ".vcf.gz" will be the input provided to FGTpartitioner using the -v flag, and the '.vcf.gz.tbi" file should be in the same directory, and with the same prefix.
 
-
+### Usage
+You can view all of the possible options by calling the help menu in the command-line interface:
+```
+./FGTpartitioner.py -h
+```
 
 
 
