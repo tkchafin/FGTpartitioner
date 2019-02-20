@@ -65,10 +65,40 @@ The result will be a binary compressed-VCF ".vcf.gz" file, and a ".vcf.gz.tbi" i
 
 ### Usage
 You can view all of the possible options by calling the help menu in the command-line interface:
-```
-./FGTpartitioner.py -h
-```
 
+```
+tyler:FGTpartitioner $ ./FGTpartitioner.py -h
+
+Must provide VCF file <-v,--vcf>
+
+FGTpartitioner.py
+
+Contact:Tyler K. Chafin, tylerkchafin@gmail.com
+
+Usage:  FGTpartitioner.py -v <input.vcf> -r <1|2|3> [-c chr1]
+
+Description: Computes parsimonious breakpoints to partition chromosomes into recombination-free blocks
+
+	Arguments:
+		-v	: VCF file for parsing
+		-r	: Strategy to treat heterozygotes. Options:
+			   1: Randomly haploidize heterozygous sites
+			   2: Fail FGT if heterozygote might be incompatible
+			   3: Pass FGT if heterozygote might be compatible
+		-c	: Chromosome or contig in VCF to partition
+		-o	: Output file name [default: regions.out]
+		-t	: Number of threads for parallel execution
+		-m	: Minimum number of individuals genotyped to keep variant [default=2]
+		-a	: Maximum number of alleles allowed per locus [default=2]
+		-h	: Displays help menu
+```
+One important option which you will need to consider is <-r>, which determines how FGDpartioner behaves when it encounters heteroozygotes. The four-gamete test has several assumptions, the most important being: 1) That you have sampled haploid chromosomes; and 2) an [infinite-sites](https://en.wikipedia.org/wiki/Infinite_sites_model) mutation model (e.g. all mutations occur at a new site- no back mutation, or multiple mutations per site). You can find more details below in the "Four-Gamete Test" section.
+
+In order to meet assumption #1, we need to manipulate our unphased genotype data. FGDpartioner allows 3 ways in which this can be accomplished: #1: <-r 1>, Randomly choose one allele and treat the sample as homozygous for that allele, at that position; #2 : <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or #3 <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by <insert citation>
+
+### The Four-Gamete Test
+
+### Algorithm
 
 
 
