@@ -32,8 +32,9 @@ cdef class SNPcall(object):
 		#print("geno is:",genotypes)
 
 		for geno in genotypes:
+			#print(geno)
 			gamete = self.hapCheck(geno)
-			if gamete >= 0:
+			if gamete <= 3: #9 is designated 'missing data' placeholder
 				gametes[gamete] = 1
 			else:
 				if 1 in geno:
@@ -75,22 +76,23 @@ cdef class SNPcall(object):
 	@staticmethod
 	#TODO: Optimize; currently 11% of runtime after 2X speedup
 	def hapCheck(geno):
+		#print(geno)
 		if geno[0] == 0:
 			if geno[1] == 0:
 				return(0)
 			elif geno[1] ==2:
 				return(1)
 			else:
-				return(None)
+				return(9)
 		elif geno[0] == 2:
 			if geno[1] == 0:
 				return(2)
 			elif geno[1] ==2:
 				return(3)
 			else:
-				return(-9)
+				return(9)
 		else:
-			return(-9)
+			return(9)
 	
 	def optimisticFGT(self, seen, hets):
 		cdef list possibilities = list()
