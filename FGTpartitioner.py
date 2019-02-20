@@ -90,7 +90,7 @@ def main():
 		if not records:
 			print("Not enough records found for chromosome:",this_chrom)
 		else:
-			nodes = fetchNodes(records, this_chrom)
+			nodes = fetchNodes(records, this_chrom, params)
 
 		#Traverse node list to find FGT conflicts
 		if len(nodes) > 2:
@@ -98,9 +98,9 @@ def main():
 			#call parallel worker runs here if params.threads>1
 			print("\tSeeking intervals across",this_chrom,"using",params.threads,"threads.")
 			if params.threads > 1:
-				findFGTs_parallel(tree, nodes, params, k_lookup)
+				tree, k_lookup = findFGTs_parallel(nodes, params)
 			else:
-				findFGTs(tree,nodes,params,k_lookup)
+				tree, k_lookup = findFGTs(nodes,params)
 
 			print("\tFound ",len(tree),"intervals.")
 			#print(tree)
@@ -151,7 +151,7 @@ Data structure:
 Or nested containment list might be better:https://academic.oup.com/bioinformatics/article/23/11/1386/199545
 
 Solving algorithm:
-	For each layer from k=1 to kmax:
+	For each layer from kmin to kmax:
 		for each interval in layer k
 			query center point of interval to get interval depth
 			if overlaps exist:
@@ -196,11 +196,13 @@ def resolveFGTs(tree, sorted_k, nodes):
 
 
 #TODO:try to speed this up. 13% of total runtime
-def findFGTs(tree, nodes, params, k_lookup):
+def findFGTs(nodes, params):
 	start = 0
 	end = 1
 	count=0
 	index = 0
+	tree = IntervalTree()
+	k_lookup = dict()
 	while start <= len(nodes):
 		#print("Start=",start)
 		#print("End=",end)
@@ -224,28 +226,31 @@ def findFGTs(tree, nodes, params, k_lookup):
 			index +=1 #increment key, so all will be unique
 			start = start+1 #move start to next SNP
 			end = start+1 #reset end to neighbor of new start
+	return(tree, k_lookup)
 
 #findFGTs function for the parallel call
-def findFGTs_worker(local_nodes, params, k_lookup, proc_number):
-	print("proc")
+def findFGTs_worker(local_nodes, params, proc_number):
+	#print("proc")
 	try:
 		start = 0 + proc_number #everyprocess starts at an offset
 		skip = params.threads #every process checks for FGTs at an interval
-		end = 1
+		end = start + 1
 		count=0
 		index = 0 + proc_number
 		local_tree = IntervalTree()
+		local_k = dict()
 		maximum = len(local_nodes)
 
 		#initialize local random number seed
 		random.seed(random.randrange(sys.maxsize)+proc_number)
 
-		if proc_number != 2:
-			return(0)
+		#Debug print to see what processs is doing
+		# if proc_number != 3:
+		# 	return(0)
 
 		while start <= maximum:
-			print("Start=",start)
-			print("End=",end)
+			#print("Start=",start)
+			#print("End=",end)
 			if end >= maximum:
 				start = start + skip
 				end= start + 1
@@ -253,7 +258,7 @@ def findFGTs_worker(local_nodes, params, k_lookup, proc_number):
 				# 	break
 				# else:
 				continue
-			print("Comparing:",local_nodes[start].position,"and",local_nodes[end].position)
+			#print(proc_number,"is comparing:",local_nodes[start].position,"and",local_nodes[end].position)
 			#Check if start and end are compatible
 			compat = local_nodes[start].FGT(local_nodes[end], params.rule)
 			if compat == True: #if compatible, increment end and continue
@@ -263,23 +268,24 @@ def findFGTs_worker(local_nodes, params, k_lookup, proc_number):
 			else: #if FGT fails, submit interval to IntervalTree, and increment start
 				#print("Not compatible!")
 				interval = Interval(local_nodes[start].position, local_nodes[end].position, IntervalData(start, end, index))
-				k_lookup[index] = interval #k-layer for this interval
-				#local_tree.add(interval) #add interval from start.position to end.position
-				print(interval)
+				local_k[index] = interval #k-layer for this interval
+				#print(proc_number,"adding:",interval)
+				local_tree.add(interval) #add interval from start.position to end.position
+				
 				index +=skip #increment key, so all will be unique
 				start = start+skip #move start to next SNP
 				end = start+1 #reset end to neighbor of new start
 
 		#return local_tree
-		return(local_tree)
+		return(local_tree, local_k) #returns tuple
 
 	except Exception as e:
 		raise Exception(e)
 
 
-def findFGTs_parallel(tree, nodes, params, k_lookup):
-	print("parallel")
-
+def findFGTs_parallel(nodes, params):
+	tree = IntervalTree()
+	k_lookup = dict()
 	#calculate skip sizes for each process
 	#e.g. process 1 of 4 runs FGT chackes for SNP 1, 5, 9, etc
 
@@ -291,52 +297,56 @@ def findFGTs_parallel(tree, nodes, params, k_lookup):
 		#local_nodes.append()
 
 	#multiprocess call
-	print("multiprocess call for processes:",proc_numbers)
+	#print("\tmultiprocess call for processes:",proc_numbers)
 	try:
-		print("try")
 		with multiprocessing.Pool(processes=params.threads) as pool:
-			print("with")
-			func = partial(findFGTs_worker, nodes, params, k_lookup)
+			#build function call
+			func = partial(findFGTs_worker, nodes, params)
+			#distribute to workers
 			results = pool.map(func, proc_numbers)
-			print(results)
+			#iteratively make union of results
+			print("\tMerging results from child processes...")
+			for result in results:
+				tree = tree | result[0]
+				k_lookup = {**k_lookup, **result[1]}
+			tree.merge_equals()
+			#print(len(tree))
 	except Exception as e:
 		pool.close()
 		raise Exception(e)
 		sys.exit(e)
-
-	pool.close()
-	pool.join()
-
-	sys.stdout.flush()
-
-
-	sys.exit(1)
+	finally:
+		pool.close()
+		pool.join()
+		sys.stdout.flush()
+		return(tree,k_lookup)
 
 
 
-def fetchNodes(records, this_chrom):
+
+def fetchNodes(records, this_chrom, params):
 	nodes = list()
 	miss_skips = 0
 	allel_skips = 0
-	c=0
+	#c=0
 	for rec in records:
 		#if this SNP
 		if rec.is_snp:
-			if rec.num_called < 2:
+			if rec.num_called < params.minInd:
 				miss_skips +=1
-			elif len(rec.alleles) > 2:
+			elif len(rec.alleles) > params.maxAllele:
 				allel_skips +=1
 			else:
 				#print(rec.samples)
 				samps = [s.gt_type for s in rec.samples]
 				nodes.append(SNPcall(rec.POS, samps))
-				c+=1
-		if c>5000:
-			break
+				#c+=1
+		# if c>5000:
+		# 	break
 	if miss_skips > 0:
 		print("\tChromosome",this_chrom,"skipped",str(miss_skips),"sites for too much missing data.")
 	if allel_skips > 0:
-		print("\tChromosome",this_chrom,"skipped",str(allel_skips),"sites for >2 alleles.")
+		print("\tChromosome",this_chrom,"skipped",str(allel_skips),"sites for too many alleles.")
 	return(nodes)
 
 
@@ -387,7 +397,7 @@ class parseArgs():
 	def __init__(self):
 		#Define options
 		try:
-			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:t:h', \
+			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:t:m:a:h', \
 			[])
 		except getopt.GetoptError as err:
 			print(err)
@@ -399,6 +409,8 @@ class parseArgs():
 		self.chrom=None
 		self.out="regions.out"
 		self.threads=1
+		self.minInd=2
+		self.maxAllele=2
 
 		#First pass to see if help menu was called
 		for o, a in options:
@@ -421,6 +433,10 @@ class parseArgs():
 				self.out = arg
 			elif opt == "t":
 				self.threads=int(arg)
+			elif opt == "m":
+				self.minInd=int(arg)
+			elif opt == "a":
+				self.maxAllele=int(arg)
 			elif opt in ('h'):
 				pass
 			else:
@@ -452,6 +468,8 @@ class parseArgs():
 		-c	: Chromosome or contig in VCF to partition
 		-o	: Output file name [default: regions.out]
 		-t	: Number of threads for parallel execution
+		-m	: Minimum number of individuals genotyped to keep variant [default=2]
+		-a	: Maximum number of alleles allowed per locus [default=2]
 		-h	: Displays help menu
 """)
 		print()
