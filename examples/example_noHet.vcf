@@ -11,7 +11,7 @@ chr1.scaffold1	400 rs84825 A	G	.	PASS	.	GT	1/1	1/1	0/0	0/0
 chr1.scaffold1	500 rs84823 G	T	.	PASS	.	GT:PL	./.:.	1/1:10,5,0	1/1:10,5,0	1/1:10,5,0
 chr1.scaffold1	600 rs84823 A	T	.	PASS	.	GT:PL	./.:.	1/1:10,5,0	0/0:10,5,0	./.
 chr1.scaffold1	650	rs77111	T	A,C	.	PASS	.	GT	./.	0/0	1/1	2/2
-chr1.scaffold1	700 rs84823 T	A	.	PASS	.	GT	1/1	1/1	./.	./.
+chr1.scaffold1	700 rs84823 T	A	.	PASS	.	GT	1/1	1/1	0/0	0/0
 chr1.scaffold1	750	indel11	G	*	.	PASS	. GT	0/0	0/0	./.	1/1
 chr1.scaffold1	800 rs87776 G	C	.	PASS	.	GT	0/0	1/1	0/0	1/1
 chr1.scaffold1	900 rs54556 G	A	.	PASS	.	GT	0/0	1/1	1/1	1/1
