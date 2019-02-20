@@ -68,9 +68,9 @@ def main():
 	else:
 		print("Invalid!",end="")
 		sys.exit(1)
-	print(" (change with -r)\n")
+	print(" (change with -r)")
 	print("Number of process threads:",params.threads,"(change with -t)")
-	print("Minimum genotyped individuals to consider locus:",params.minInd,"(change w/ -m)")
+	print("Minimum genotyped individuals to consider locus:",params.minInd,"(change w/ -m)\n")
 
 	breakpoints = collections.OrderedDict()
 
@@ -102,7 +102,7 @@ def main():
 			if params.threads > 1:
 				tree, k_lookup = findFGTs_parallel(nodes, params)
 			else:
-				tree, k_lookup = findFGTs(nodes,params)
+				tree, k_lookup = findFGTs(nodes, params)
 
 			print("\tFound ",len(tree),"intervals.")
 			#print(tree)
@@ -231,11 +231,12 @@ def findFGTs(nodes, params):
 	return(tree, k_lookup)
 
 #findFGTs function for the parallel call
-def findFGTs_worker(local_nodes, params, proc_number):
+def findFGTs_worker(local_nodes, threads, rule, proc_number):
 	#print("proc")
 	try:
+		#print("nodes:",len(local_nodes))
 		start = 0 + proc_number #everyprocess starts at an offset
-		skip = params.threads #every process checks for FGTs at an interval
+		skip = threads #every process checks for FGTs at an interval
 		end = start + 1
 		count=0
 		index = 0 + proc_number
@@ -262,7 +263,7 @@ def findFGTs_worker(local_nodes, params, proc_number):
 				continue
 			#print(proc_number,"is comparing:",local_nodes[start].position,"and",local_nodes[end].position)
 			#Check if start and end are compatible
-			compat = local_nodes[start].FGT(local_nodes[end], params.rule)
+			compat = local_nodes[start].FGT(local_nodes[end], rule)
 			if compat == True: #if compatible, increment end and continue
 				#print("Compatible! Checking next SNP")
 				end+=1
@@ -303,7 +304,8 @@ def findFGTs_parallel(nodes, params):
 	try:
 		with multiprocessing.Pool(processes=params.threads) as pool:
 			#build function call
-			func = partial(findFGTs_worker, nodes, params)
+			print("nodes:",len(nodes))
+			func = partial(findFGTs_worker, nodes, params.threads, params.rule)
 			#distribute to workers
 			results = pool.map(func, proc_numbers)
 			#iteratively make union of results
@@ -315,8 +317,8 @@ def findFGTs_parallel(nodes, params):
 			#print(len(tree))
 	except Exception as e:
 		pool.close()
+		print("Unknown error:",e)
 		raise Exception(e)
-		sys.exit(e)
 	finally:
 		pool.close()
 		pool.join()
@@ -330,7 +332,7 @@ def fetchNodes(records, this_chrom, params):
 	nodes = list()
 	miss_skips = 0
 	allel_skips = 0
-	#c=0
+	c=0
 	for rec in records:
 		#if this SNP
 		if rec.is_snp:
@@ -342,13 +344,14 @@ def fetchNodes(records, this_chrom, params):
 				#print(rec.samples)
 				samps = [s.gt_type for s in rec.samples]
 				nodes.append(SNPcall(rec.POS, samps))
-				#c+=1
-		# if c>5000:
-		# 	break
+				c+=1
+		#if c>5000:
+		#	break
 	if miss_skips > 0:
 		print("\tChromosome",this_chrom,"skipped",str(miss_skips),"sites for too much missing data.")
 	if allel_skips > 0:
 		print("\tChromosome",this_chrom,"skipped",str(allel_skips),"sites for too many alleles.")
+	print("\tChromozome",this_chrom,"found",str(c),"passing variants.")
 	return(nodes)
 
 
