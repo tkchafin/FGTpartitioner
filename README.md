@@ -10,7 +10,7 @@ Of note, there are multiple options for partioning a genome using the four-gamet
 
 FGTpartitioner is my implementation, which is in part reinventing the wheel as a learning exercise. But, if you find it useful for your research, please just cite this GitHub page:
 ```
-Chafin, TK. 2019. FGDpartitioner: https://github.com/tkchafin/FGTpartitioner
+Chafin, TK. 2019. FGTpartitioner: https://github.com/tkchafin/FGTpartitioner
 ```
 
 
@@ -103,9 +103,9 @@ Description: Computes parsimonious breakpoints to partition chromosomes into rec
 		-a	: Maximum number of alleles allowed per locus [default=2]
 		-h	: Displays help menu
 ```
-One important option which you will need to consider is <-r>, which determines how FGDpartioner behaves when it encounters heteroozygotes. The four-gamete test has several assumptions, the most important being: 1) That you have sampled haploid chromosomes; and 2) an [infinite-sites](https://en.wikipedia.org/wiki/Infinite_sites_model) mutation model (e.g. all mutations occur at a new site- no back mutation, or multiple mutations per site). You can find more details below in the "Four-Gamete Test" section.
+One important option which you will need to consider is <-r>, which determines how FGTpartioner behaves when it encounters heteroozygotes. The four-gamete test has several assumptions, the most important being: 1) That you have sampled haploid chromosomes; and 2) an [infinite-sites](https://en.wikipedia.org/wiki/Infinite_sites_model) mutation model (e.g. all mutations occur at a new site- no back mutation, or multiple mutations per site). You can find more details below in the "Four-Gamete Test" section.
 
-In order to meet assumption #1, we need to manipulate our [unphased genotype data](https://www.biostars.org/p/7846/). FGDpartioner allows 3 ways in which this can be accomplished (passed as an integer option to the -r flag): 1) Randomly choose one allele and treat the sample as homozygous for that allele, at that position; 2) <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or 3) <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
+In order to meet assumption #1, we need to manipulate our [unphased genotype data](https://www.biostars.org/p/7846/). FGTpartioner allows 3 ways in which this can be accomplished (passed as an integer option to the -r flag): 1) Randomly choose one allele and treat the sample as homozygous for that allele, at that position; 2) <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or 3) <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
 
 ### The Four-Gamete Test
 You can read about the [four-gamete test (FGT)](https://en.wikipedia.org/wiki/Four-gamete_test) online, but the principle is pretty simple. If we've sampled two positions (SNPs) along a chromosome, and **assuming that multiple mutations at a site never occur** (e.g. an "infinite sites" model, the only way that we could possibly sample haploid chromosomes exhibiting **all** combinations of alleles at those two positions is if recombination had occured. 
@@ -155,7 +155,7 @@ Meaning, in this sample of 4 chromosomes, all possible gametes resulting from th
 If we sample the following unphased genotype:
 ----A/T--------C/G---- (where A/T and C/G represent heterozygous genotypes). 
 
-How do we know the haplotypes of the two individual chromosomes? The short answer is, given this data alone, that we can't. That is why I give 3 options in FGDpartitioner:
+How do we know the haplotypes of the two individual chromosomes? The short answer is, given this data alone, that we can't. That is why I give 3 options in FGTpartitioner:
 
 **-r 1**
 This option randomly resolves heterozygotes, yielding one of the following as a pseudo-haplotype for this sample:
@@ -198,7 +198,7 @@ In this example, two conflicts were found: one of k=1 and another of k=5. To "so
 ```
 Where "|" represents the breakpoint. The algorithm first considers the k=1 interval, and places a breakpoint in the center between the flanking SNPs. This breakpoint also resolves the k=5 interval, thus solving the alignment to create two blocks (one breakpoint), which is the most parsimonious solution. In reality, we do not know where the breakpoint actually occured: it could be anywhere within the k=1 interval. My solution was to evenly divide these monomorphic nucleotides between the two breakpoints. This might not be your desired behavior... But fortunately this would be very easy to change in the code- have at it. 
 
-In reality, FGDpartitioner actually considers every possible breakpoint (centerpoint between SNPs, or "nodes"), so as to maximally resolve intervals. For example, with the following case:
+In reality, FGTpartitioner actually considers every possible breakpoint (centerpoint between SNPs, or "nodes"), so as to maximally resolve intervals. For example, with the following case:
 ```
         _______________________________________________________
 	                        _________________________________________
