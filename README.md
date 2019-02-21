@@ -145,10 +145,10 @@ We see that all possible combinations were sampled:
        and
 ----T--------G----
 ```
-This is **only** possible (again, given an assumption that multiple substitutions per site never occurs), if at some point during meiosis, there had been a crossover event in between these two sites:
+This is **only** possible (again, given an assumption that multiple substitutions per site never occurs), if at some point there had been a crossover event duyring meiosis allowing recombination between these two sites:
 ```
-----A---\/----C----   -->  ----A--------G----  
-----T---/\----G----   -->  ----T--------C---- 
+----A--------C----   -->   ----A---\/----C----   -->  ----A--------G----  
+----T--------G----   -->   ----T---/\----G----   -->  ----T--------C---- 
 ```
 Meaning, in this sample of 4 chromosomes, all possible gametes resulting from this recombination event are seen. Understanding this should demonstrate the difficulty of applying the four-gamete test to an unphased diploid sample: What do we do with heterozygotes?
 
