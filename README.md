@@ -128,6 +128,45 @@ Conducting the test is very simple. If we sample at least 4 haploid chromosomes,
 |3     | A | C |
 |4     | T | G |
 
+Here, only 2 combinations are seen here. One haplotype, found in samples 1-3, has ----A--------C----, while the other haplotype (sample 4) has ----T--------G----. However, if we sampled the following chromosomes:
+
+| Sample | 1028 Allele | 4589 Allele |
+|:-----: |:-----:| :-----:|
+| 1     | A | G |
+|2     | A | C |
+|3     | T | C |
+|4     | T | G |
+
+We see that all possible combinations were sampled: ----A--------C----; ----A--------G----; ----T--------C----; and ----T--------G----. 
+
+This is **only** possible (again, given an assumption that multiple substitutions per site never occurs), if at some point during meiosis, there had been a crossover event in between these two sites:
+
+----A---\/----C----   -->  ----A--------G----  
+----T---/\----G----   -->  ----T--------C---- 
+
+Meaning, in this sample of 4 chromosomes, all possible gametes resulting from this recombination event are seen. Understanding this should demonstrate the difficulty of applying the four-gamete test to an unphased diploid sample: What do we do with heterozygotes?
+
+If we sample the following unphased genotype:
+----A/T--------C/G---- (where A/T and C/G represent heterozygous genotypes). 
+
+How do we know the haplotypes of the two individual chromosomes? The short answer is, given this data alone, that we can't. That is why I give 3 options in FGDpartitioner:
+
+**-r 1**
+This option randomly resolves heterozygotes, yielding one of the following as a pseudo-haplotype for this sample:
+----A--------C----
+----A--------G----
+----T--------C----
+----T--------G----
+
+**-r 2**
+This option considers all possible pseudo-haplotypes for this sample, and fails the FGT if **any** of these would violate the FGT. 
+
+**-r 3**
+This option considers all possible pseudo-haplotypes for the sample, and optimistically assumes that if **any** of them could be consistent with the FGT, that recombination did not occur. 
+
+While not ideal, in the absence of phasing information (as is often the case when dealing with non-model data) we don't have many options. 
+
+
 ### Algorithm
 
 
