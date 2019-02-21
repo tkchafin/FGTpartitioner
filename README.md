@@ -112,10 +112,21 @@ You can read about the [four-gamete test (FGT)](https://en.wikipedia.org/wiki/Fo
 
 For example, if we sampled two SNPs on a chromosome, one at position 1028 which is either an A or a T, and another at position 4589 which is either a G or a C:
 
-| Position     | Allele1   | Allele2  |
+| Position  | Allele1 | Allele2 |
 |:-----: |:-----:| :-----:|
 | 1028     | A | T |
 | 4589     | G | C |
+
+It should be impossible to observe all possible combinations of A/T and G/C (i.e. A at position 1 and G at position 2, A as position 1 and C at position 2, and so on...) without one of two things occuring: 1) There have been multiple convergent substitutions at a site (see: [homoplasy](https://en.wikipedia.org/wiki/Homoplasy)); or 2) A crossover event has occured, allowing chromosomes to exchange alleles. Since the FGT assumes that #1 never occurs (the infinite sites assumption), then we must conclude that #2 has occured. 
+
+Conducting the test is very simple. If we sample at least 4 haploid chromosomes, we shouldn't see all four possible combinations of alleles. For example, the following sampled chromosomes do NOT violate the four-gamete test:
+
+| Sample | 1028 Allele | 4589 Allele |
+|:-----: |:-----:| :-----:|
+| 1     | A | C |
+|2     | A | C |
+|3     | A | C |
+|4     | T | G |
 
 ### Algorithm
 
