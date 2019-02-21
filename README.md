@@ -8,7 +8,7 @@ Of note, there are multiple options for partioning a genome using the four-gamet
 - https://github.com/YichaoOU/genome_partition
 - http://www.csbio.unc.edu/mcmillan/pubs/BCB10_Wang.pdf
 
-FGTpartitioner is my (admittedly inneficient) implementation, which is in part reinventing the wheel as a learning exercise. But, if you find it useful for your research, please just cite this GitHub page:
+FGTpartitioner is my implementation, which is in part reinventing the wheel as a learning exercise. But, if you find it useful for your research, please just cite this GitHub page:
 ```
 Chafin, TK. 2019. FGDpartitioner: https://github.com/tkchafin/FGTpartitioner
 ```
@@ -108,6 +108,14 @@ One important option which you will need to consider is <-r>, which determines h
 In order to meet assumption #1, we need to manipulate our [unphased genotype data](https://www.biostars.org/p/7846/). FGDpartioner allows 3 ways in which this can be accomplished: #1: <-r 1>, Randomly choose one allele and treat the sample as homozygous for that allele, at that position; #2 : <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or #3 <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010) Genome-wide compatible SNP intervals and their properties](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
 
 ### The Four-Gamete Test
+You can read about the [four-gamete test (FGT)](https://en.wikipedia.org/wiki/Four-gamete_test) online, but the principle is pretty simple. If we've sampled two positions (SNPs) along a chromosome, and **assuming that multiple mutations at a site never occur** (e.g. an "infinite sites" model, the only way that we could possibly sample haploid chromosomes exhibiting **all** combinations of alleles at those two positions is if recombination had occured. 
+
+For example, if we sampled two SNPs on a chromosome, one at position 1028 which is either an A or a T, and another at position 4589 which is either a G or a C:
+
+| Position     | Allele1   | Allele2  |
+|:-----: |:-----:| :-----:|
+| 1028     | A | T |
+| 4589     | G | C |
 
 ### Algorithm
 
