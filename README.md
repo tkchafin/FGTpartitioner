@@ -137,13 +137,19 @@ Here, only 2 combinations are seen here. One haplotype, found in samples 1-3, ha
 |3     | T | C |
 |4     | T | G |
 
-We see that all possible combinations were sampled: ----A--------C----; ----A--------G----; ----T--------C----; and ----T--------G----. 
-
+We see that all possible combinations were sampled: 
+```
+----A--------C----
+----A--------G----
+----T--------C----
+       and
+----T--------G----
+```
 This is **only** possible (again, given an assumption that multiple substitutions per site never occurs), if at some point during meiosis, there had been a crossover event in between these two sites:
-
+```
 ----A---\/----C----   -->  ----A--------G----  
 ----T---/\----G----   -->  ----T--------C---- 
-
+```
 Meaning, in this sample of 4 chromosomes, all possible gametes resulting from this recombination event are seen. Understanding this should demonstrate the difficulty of applying the four-gamete test to an unphased diploid sample: What do we do with heterozygotes?
 
 If we sample the following unphased genotype:
@@ -153,11 +159,12 @@ How do we know the haplotypes of the two individual chromosomes? The short answe
 
 **-r 1**
 This option randomly resolves heterozygotes, yielding one of the following as a pseudo-haplotype for this sample:
+```
 ----A--------C----
 ----A--------G----
 ----T--------C----
 ----T--------G----
-
+```
 **-r 2**
 This option considers all possible pseudo-haplotypes for this sample, and fails the FGT if **any** of these would violate the FGT. 
 
