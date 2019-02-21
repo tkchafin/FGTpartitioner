@@ -4,9 +4,9 @@ Partitions genome data using the 4-gamete test into a minimal number of blocks w
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
 
 Of note, there are multiple options for partioning a genome using the four-gamete test. Here are a few, sorry if I left anyone out:
--https://github.com/RILAB/rmin_cut
--https://github.com/YichaoOU/genome_partition
--http://www.csbio.unc.edu/mcmillan/pubs/BCB10_Wang.pdf
+- https://github.com/RILAB/rmin_cut
+- https://github.com/YichaoOU/genome_partition
+ -http://www.csbio.unc.edu/mcmillan/pubs/BCB10_Wang.pdf
 
 FGTpartitioner is my (admittedly inneficient) implementation, which is in part reinventing the wheel as a learning exercise. But, if you find it useful for your research, please just cite this GitHub page:
 ```
