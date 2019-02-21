@@ -175,16 +175,59 @@ While not ideal, in the absence of phasing information (as is often the case whe
 
 
 ### Algorithm
+The basic idea is that we perform a minimal number of pairwise comparisons between SNPs so as to characterize any possible recombination events which might have occured, and then place a minimal number of breakpoints along the chromosome to yield a parimonious set of blocks which do not contain variants violating the FGT. 
 
+That is to say that, none of these blocks appear to contain recombination events according to a relatively low-power test (the FGT). I also use a 'greedy' approach in that I retain all variant information. As a result, these blocks likely **do** contain recombinations, but the FGT lacks the power to identify it. 
 
+When identifying FGT violations, I place these as intervals in an [interval tree](https://en.wikipedia.org/wiki/Interval_tree) data structure, which is an efficient way of storing and parsing this sort of data. For each SNP-pair which violate the FGT, I also assign a layer (k) representing the number of SNPs (since these are the only informative columns in the alignment) which are subsumed by the interval. For example, if the A/C and A/T SNPs in the following violated the FGT, the interval length (k), or the number of SNPs spanned, would be 5.
+```
+        _________________________________________________
+--------A/T----------T/C----T/C----G/A---C/T------------A/C--------T/G--
+```
+With increasing distance between SNPs, the higher probability that multiple recombination events have occured. For this reason, if multiple "conflict intervals" overlap, I place a higher weight on the interval with the minimum-k:
+```
+        _________________________________________________
+	              _______
+--------A/T----------T/C----T/C----G/A---C/T------------A/C--------T/G--
+```
+In this example, two conflicts were found: one of k=1 and another of k=5. To "solve" this interval tree (i.e. place the smallest number of breakpoints so as to eliminate all FGT conflicts), I solve from min(k) to max(k). Here, FGTpartitioner would find the following solution:
+```
+        __________________|_______________________________
+	              ____|___
+--------A/T----------T/C--|--T/C----G/A---C/T------------A/C--------T/G--
+```
+Where "|" represents the breakpoint. The algorithm first considers the k=1 interval, and places a breakpoint in the center between the flanking SNPs. This breakpoint also resolves the k=5 interval, thus solving the alignment to create two blocks (one breakpoint), which is the most parsimonious solution. In reality, we do not know where the breakpoint actually occured: it could be anywhere within the k=1 interval. My solution was to evenly divide these monomorphic nucleotides between the two breakpoints. This might not be your desired behavior... But fortunately this would be very easy to change in the code- have at it. 
 
+In reality, FGDpartitioner actually considers every possible breakpoint (centerpoint between SNPs, or "nodes"), so as to maximally resolve intervals. For example, with the following case:
+```
+        _______________________________________________________
+	                        _________________________________________
+	              ____________________
+--------A/T----------T/C--(1)--T/C--(2)--G/A---C/T------------A/C--------T/G--
+```
+The algorithm would look at centerpoint #1, count the number of intervals which would be resolved (=2), and then do the same for centerpoint #2 (=3). In this case, the most parsimonious solution is to place a single breakpoint at candidate #2. 
 
+Because of this strategy, you might have noticed that it would be a waste of time to consider any pairwise comparisons after identifying a conflict, because those intervals would always be of larger k (and thus never considered, since we solve from min(k) to max(k)). So, I don't actually consider all possible comparisons, but instead consider sequentially more distance SNPs until I find a conflict- which will be guaranteed to be the minimal-k conflict for the focal SNP. Starting from the first SNP, I would make passes until discovering a conflict:
 
+```
+Pass #1 ==============>
+Pass #2 =====================>
+Pass #3 ============================>
+...
+...
+--------A/T----------T/C----T/C----G/A---C/T------------A/C--------T/G--
+```
 
-
-
-
-
+The same procedure is then performed for each SNP:
+```
+Pass #1               =======>
+Pass #2               ==============>
+Pass #3               ====================>
+...
+...
+--------A/T----------T/C----T/C----G/A---C/T------------A/C--------T/G--
+```
+There are probably better ways to do it, but this accomplishes my goal so ¯\_(ツ)_/¯
 
 
 ### License
