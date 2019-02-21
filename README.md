@@ -14,7 +14,7 @@ Requires Python 3 and the following modules:
 - Cython > 0.27 
 - multiprocess
 
-You will additionally need tabix installed to clock-compress and index your VCF file (which enables me to parse it more quickly).
+You will additionally need tabix installed to block-compress and index your VCF file (which enables me to parse it more quickly).
 
 The easiest way to install all of the dependencies is through conda:
 ```
@@ -94,7 +94,7 @@ Description: Computes parsimonious breakpoints to partition chromosomes into rec
 ```
 One important option which you will need to consider is <-r>, which determines how FGDpartioner behaves when it encounters heteroozygotes. The four-gamete test has several assumptions, the most important being: 1) That you have sampled haploid chromosomes; and 2) an [infinite-sites](https://en.wikipedia.org/wiki/Infinite_sites_model) mutation model (e.g. all mutations occur at a new site- no back mutation, or multiple mutations per site). You can find more details below in the "Four-Gamete Test" section.
 
-In order to meet assumption #1, we need to manipulate our unphased genotype data. FGDpartioner allows 3 ways in which this can be accomplished: #1: <-r 1>, Randomly choose one allele and treat the sample as homozygous for that allele, at that position; #2 : <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or #3 <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by <insert citation>
+In order to meet assumption #1, we need to manipulate our unphased genotype data. FGDpartioner allows 3 ways in which this can be accomplished: #1: <-r 1>, Randomly choose one allele and treat the sample as homozygous for that allele, at that position; #2 : <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or #3 <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010) Genome-wide compatible SNP intervals and their properties](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
 
 ### The Four-Gamete Test
 
