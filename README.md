@@ -15,7 +15,7 @@ Chafin, TK. 2019. FGDpartitioner: https://github.com/tkchafin/FGTpartitioner
 
 
 ### Status
-FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. However, it is currently very slow! Oh well, [what're you gonna do?](https://uproxx.files.wordpress.com/2018/10/big-mouth-rick.jpg?quality=100&w=650) I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. I may spend a little more time profiling and optimizing, but the code does what I need it to do so I'll likely stop tinkering with it :)
+FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. However, it is currently very slow. Oh well, [what're you gonna do?](https://uproxx.files.wordpress.com/2018/10/big-mouth-rick.jpg?quality=100&w=650) I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. I may spend a little more time profiling and optimizing, but the code does what I need it to do so I'll likely stop tinkering with it :)
 
 ### Dependencies
 Requires Python 3 and the following modules:
