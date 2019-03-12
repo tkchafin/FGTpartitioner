@@ -92,6 +92,7 @@ def main():
 		if not records:
 			print("Not enough records found for chromosome:",this_chrom)
 		else:
+			#takes about 8 minutes for a large chromosome. parallelize?
 			nodes = fetchNodes(records, this_chrom, params)
 
 		#Traverse node list to find FGT conflicts
@@ -213,6 +214,10 @@ def findFGTs(nodes, params):
 			end= start + 1
 			continue
 		#print("Comparing:",nodes[start].position,"and",nodes[end].position)
+		#if distance is too far, stop checking current start
+		if nodes[end].position - nodes[start].position > params.dist:
+			start = start+1
+			end = end+1
 		#Check if start and end are compatible
 		compat = nodes[start].FGT(nodes[end], params.rule)
 		if compat == True: #if compatible, increment end and continue
@@ -231,7 +236,7 @@ def findFGTs(nodes, params):
 	return(tree, k_lookup)
 
 #findFGTs function for the parallel call
-def findFGTs_worker(local_nodes, threads, rule, proc_number):
+def findFGTs_worker(local_nodes, threads, rule, dist, proc_number):
 	#print("proc")
 	try:
 		#print("nodes:",len(local_nodes))
@@ -262,6 +267,10 @@ def findFGTs_worker(local_nodes, threads, rule, proc_number):
 				# else:
 				continue
 			#print(proc_number,"is comparing:",local_nodes[start].position,"and",local_nodes[end].position)
+			#if distance is too far, stop checking current start
+			if local_nodes[end].position - local_nodes[start].position > dist:
+				start = start+1
+				end = end+1
 			#Check if start and end are compatible
 			compat = local_nodes[start].FGT(local_nodes[end], rule)
 			if compat == True: #if compatible, increment end and continue
@@ -304,8 +313,8 @@ def findFGTs_parallel(nodes, params):
 	try:
 		with multiprocessing.Pool(processes=params.threads) as pool:
 			#build function call
-			print("nodes:",len(nodes))
-			func = partial(findFGTs_worker, nodes, params.threads, params.rule)
+			#print("nodes:",len(nodes))
+			func = partial(findFGTs_worker, nodes, params.threads, params.rule, params.dist)
 			#distribute to workers
 			results = pool.map(func, proc_numbers)
 			#iteratively make union of results
@@ -402,7 +411,7 @@ class parseArgs():
 	def __init__(self):
 		#Define options
 		try:
-			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:t:m:a:h', \
+			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:t:m:a:d:h', \
 			[])
 		except getopt.GetoptError as err:
 			print(err)
@@ -416,6 +425,7 @@ class parseArgs():
 		self.threads=1
 		self.minInd=2
 		self.maxAllele=2
+		self.dist=sys.maxsize
 
 		#First pass to see if help menu was called
 		for o, a in options:
@@ -444,6 +454,8 @@ class parseArgs():
 				self.maxAllele=int(arg)
 			elif opt in ('h'):
 				pass
+			elif opt == "d":
+				self.dist = int(arg)
 			else:
 				assert False, "Unhandled option %r"%opt
 
@@ -475,6 +487,7 @@ class parseArgs():
 		-t	: Number of threads for parallel execution
 		-m	: Minimum number of individuals genotyped to keep variant [default=2]
 		-a	: Maximum number of alleles allowed per locus [default=2]
+		-d	: Maximum physical distance (in nucleotides) to perform FGT
 		-h	: Displays help menu
 """)
 		print()
