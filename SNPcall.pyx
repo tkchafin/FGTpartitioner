@@ -11,8 +11,8 @@ cdef class SNPcall(object):
 		self.position = int(pos)
 		self.calls = list(samps)
 	
-	def __lt__(self, other):
-		return(self.position < other.position)
+	# def __lt__(self, other):
+	# 	return(self.position < other.position)
 	
 	def __richcmp__(self, other, op):
 		if op == 2:#Py_EQ
