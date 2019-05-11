@@ -27,7 +27,18 @@ def main():
 	contigs = dict()
 	if params.chrom:
 		print("Only reading chromosome:",params.chrom)
+		s=0
+		e="the end of the chromosome"
+		if params.spos:
+			s=params.spos
+		if params.epos:
+			e=params.epos
+		if params.spos or params.epos:
+			print("--Computing breakpoints starting at position",s,"and ending at",e)
 	else:
+		if params.spos or params.epos:
+			print("Cannot use start/stop coordinates <-s/-e> without specifying chromosome <-c>.")
+			sys.exit(1)
 		print("Reading all chromosomes from VCF...")
 
 	for c,s in vfh.contigs.items():
@@ -86,13 +97,21 @@ def main():
 		stop =1
 		index=1 #keys for intervals
 		breaks = list()
-
+		
+		spos = 0
+		epos = contigs[this_chrom]
+		if params.spos:
+			spos = params.spos
+		if params.epos:
+			epos = params.epos
+			
 		#Gather relevant SNP calls from the VCF
-		records = vfh.fetch(this_chrom)
+		records = vfh.fetch(this_chrom, start=spos, end=epos)
 		if not records:
 			print("Not enough records found for chromosome:",this_chrom)
 		else:
-			#takes about 8 minutes for a large chromosome. parallelize?
+			#takes about 8 minutes for a large chromosome
+			#could easily be parallelized
 			nodes = fetchNodes(records, this_chrom, params)
 
 		#Traverse node list to find FGT conflicts
@@ -126,7 +145,8 @@ def main():
 		print("\tFound",len(breaks),"most parsimonious breakpoints.")
 
 	print("\nWriting regions to file (format: chromosome:start-end)")
-	regions = getRegions(breakpoints, contigs)
+	print("Note that these are 1-based indexing (VCF is 0-based)")
+	regions = getRegions(breakpoints, contigs, spos, epos)
 
 	if len(regions) > 0:
 		write_regions(params.out, regions)
@@ -189,9 +209,18 @@ def resolveFGTs(tree, sorted_k, nodes):
 					max_depth = local_depth
 					max_centerpoint = centerpoint
 					#max_intersects = intersects
-			#remove all intervals overlapping with centerpoint at greatest depth
-			del tree[max_centerpoint]
 
+			#remove all intervals overlapping with centerpoint at greatest depth
+			try:
+				tree.remove_overlap(int(max_centerpoint))
+			#had some weird cases where the above Failed
+			#if it didn't work, try manually removing them:
+			except:
+				#print("Failed at centerpoint",centerpoint)
+				#print("overlapping intervals:")
+				for i in tree[max_centerpoint]:
+					tree.discard(i)
+					#print(i)
 			#add to breakpoints
 			breaks.append(max_centerpoint)
 			#print("Selected breakpoint:",max_centerpoint)
@@ -213,26 +242,26 @@ def findFGTs(nodes, params):
 			start = start + 1
 			end= start + 1
 			continue
-		#print("Comparing:",nodes[start].position,"and",nodes[end].position)
-		#if distance is too far, stop checking current start
-		if nodes[end].position - nodes[start].position > params.dist:
-			start = start+1
-			end = end+1
-		#Check if start and end are compatible
-		compat = nodes[start].FGT(nodes[end], params.rule)
-		if compat == True: #if compatible, increment end and continue
-			#print("Compatible! Checking next SNP")
-			end+=1
+		elif nodes[end].position - nodes[start].position > params.dist:
+			start = start + 1
+			end= start + 1
 			continue
-		else: #if FGT fails, submit interval to IntervalTree, and increment start
-			#print("Not compatible!")
-			interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end, index))
-			k_lookup[index] = interval #k-layer for this interval
-			tree.add(interval) #add interval from start.position to end.position
-			#print(interval)
-			index +=1 #increment key, so all will be unique
-			start = start+1 #move start to next SNP
-			end = start+1 #reset end to neighbor of new start
+		else:
+			#Check if start and end are compatible
+			compat = nodes[start].FGT(nodes[end], params.rule)
+			if compat == True: #if compatible, increment end and continue
+				#print("Compatible! Checking next SNP")
+				end+=1
+				continue
+			else: #if FGT fails, submit interval to IntervalTree, and increment start
+				#print("Not compatible!")
+				interval = Interval(nodes[start].position, nodes[end].position, IntervalData(start, end, index))
+				k_lookup[index] = interval #k-layer for this interval
+				tree.add(interval) #add interval from start.position to end.position
+				#print(interval)
+				index +=1 #increment key, so all will be unique
+				start = start+1 #move start to next SNP
+				end = start+1 #reset end to neighbor of new start
 	return(tree, k_lookup)
 
 #findFGTs function for the parallel call
@@ -266,27 +295,27 @@ def findFGTs_worker(local_nodes, threads, rule, dist, proc_number):
 				# 	break
 				# else:
 				continue
-			#print(proc_number,"is comparing:",local_nodes[start].position,"and",local_nodes[end].position)
-			#if distance is too far, stop checking current start
-			if local_nodes[end].position - local_nodes[start].position > dist:
-				start = start+1
-				end = end+1
-			#Check if start and end are compatible
-			compat = local_nodes[start].FGT(local_nodes[end], rule)
-			if compat == True: #if compatible, increment end and continue
-				#print("Compatible! Checking next SNP")
-				end+=1
+			elif local_nodes[end].position - local_nodes[start].position > dist:
+				start = start + skip
+				end= start + 1
 				continue
-			else: #if FGT fails, submit interval to IntervalTree, and increment start
-				#print("Not compatible!")
-				interval = Interval(local_nodes[start].position, local_nodes[end].position, IntervalData(start, end, index))
-				local_k[index] = interval #k-layer for this interval
-				#print(proc_number,"adding:",interval)
-				local_tree.add(interval) #add interval from start.position to end.position
-				
-				index +=skip #increment key, so all will be unique
-				start = start+skip #move start to next SNP
-				end = start+1 #reset end to neighbor of new start
+			else:
+				#Check if start and end are compatible
+				compat = local_nodes[start].FGT(local_nodes[end], rule)
+				if compat == True: #if compatible, increment end and continue
+					#print("Compatible! Checking next SNP")
+					end+=1
+					continue
+				else: #if FGT fails, submit interval to IntervalTree, and increment start
+					#print("Not compatible!")
+					interval = Interval(local_nodes[start].position, local_nodes[end].position, IntervalData(start, end, index))
+					local_k[index] = interval #k-layer for this interval
+					#print(proc_number,"adding:",interval)
+					local_tree.add(interval) #add interval from start.position to end.position
+					
+					index +=skip #increment key, so all will be unique
+					start = start+skip #move start to next SNP
+					end = start+1 #reset end to neighbor of new start
 
 		#return local_tree
 		return(local_tree, local_k) #returns tuple
@@ -360,7 +389,7 @@ def fetchNodes(records, this_chrom, params):
 		print("\tChromosome",this_chrom,"skipped",str(miss_skips),"sites for too much missing data.")
 	if allel_skips > 0:
 		print("\tChromosome",this_chrom,"skipped",str(allel_skips),"sites for too many alleles.")
-	print("\tChromozome",this_chrom,"found",str(c),"passing variants.")
+	print("\tChromosome",this_chrom,"found",str(c),"passing variants.")
 	return(nodes)
 
 
@@ -385,24 +414,37 @@ def write_regions(f, r):
 #lengths is a dict where key = chromosome and value = total length
 #function to calculate region bounds from breakpoints
 #returns list of region tuples
-def getRegions(breaks, lengths):
+def getRegions(breaks, lengths, s, e):
 	ret = list()
+	#print(breaks)
 	for chrom in breaks.keys():
+		end=lengths[chrom]
+		if e:
+			end=e
+		start=1
+		if s:
+			start = s
 		sorted_breaks = sorted(breaks[chrom])
+		#if there is only 1 break:
 		if len(breaks[chrom]) == 1:
-			ret.append(tuple([chrom, 1, int(round(breaks[chrom][0]))]))
-			ret.append(tuple([chrom, int(math.ceil(sorted_breaks[-1])), int(lengths[chrom])]))
+			breakpoint = int(sorted_breaks[0])
+			first = tuple([chrom, start, int(sorted_breaks[0])])
+			#ret.append(tuple([chrom, 1, ee]))
+			ret.append(tuple([chrom, int(sorted_breaks[-1])+1, end+1])) #add 1 because 1-based index
+		#if many breaks
 		elif len(breaks[chrom]) > 1:
-			first = tuple([chrom, 1, int(round(sorted_breaks[0]))])
+			first = tuple([chrom, start, int(sorted_breaks[0])])
 			ret.append(first)
-
-			for idx, br in enumerate(sorted_breaks[1:-1]):
-				ret.append(tuple([chrom, int(round(sorted_breaks[idx])), int(math.ceil(sorted_breaks[idx+1]))]))
-
-			last = tuple([chrom, int(math.ceil(sorted_breaks[-1])), int(lengths[chrom])])
+			previous = int(sorted_breaks[0])+1
+			for idx, breakpoint in enumerate(sorted_breaks[1:-1]):
+				tup = tuple([chrom, previous, int(breakpoint)])
+				ret.append(tup)
+				previous = int(breakpoint)+1
+			last = tuple([chrom, previous, int(lengths[chrom])+1])
 			ret.append(last)
+		#if there are no breaks, add whole region 
 		else:
-			ret.append([chrom, 1, int(lengths[chrom])])
+			ret.append([chrom, 1, int(lengths[chrom])+1])
 	return(ret)
 
 
@@ -411,7 +453,7 @@ class parseArgs():
 	def __init__(self):
 		#Define options
 		try:
-			options, remainder = getopt.getopt(sys.argv[1:], 'v:r:c:o:t:m:a:d:h', \
+			options, remainder = getopt.getopt(sys.argv[1:], 's:e:v:r:c:o:t:m:a:d:h', \
 			[])
 		except getopt.GetoptError as err:
 			print(err)
@@ -426,6 +468,9 @@ class parseArgs():
 		self.minInd=2
 		self.maxAllele=2
 		self.dist=sys.maxsize
+		
+		self.spos=None
+		self.epos=None
 
 		#First pass to see if help menu was called
 		for o, a in options:
@@ -456,6 +501,10 @@ class parseArgs():
 				pass
 			elif opt == "d":
 				self.dist = int(arg)
+			elif opt == "s":
+				self.spos=int(arg)
+			elif opt == "e":
+				self.epos=int(arg)
 			else:
 				assert False, "Unhandled option %r"%opt
 
@@ -483,6 +532,9 @@ class parseArgs():
 			   2: Fail FGT if heterozygote might be incompatible
 			   3: Pass FGT if heterozygote might be compatible
 		-c	: Chromosome or contig in VCF to partition
+			Start coordinate (optional): -s
+			Stop coordinate (optional): -e
+			Provide coordinates as 0-based (as in VCF)
 		-o	: Output file name [default: regions.out]
 		-t	: Number of threads for parallel execution
 		-m	: Minimum number of individuals genotyped to keep variant [default=2]
