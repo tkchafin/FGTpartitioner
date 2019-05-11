@@ -8,7 +8,7 @@ Of note, there are multiple options for partioning a genome using the four-gamet
 - https://github.com/YichaoOU/genome_partition
 - http://www.csbio.unc.edu/mcmillan/pubs/BCB10_Wang.pdf
 
-FGTpartitioner is my implementation, which is in part reinventing the wheel as a learning exercise. But, if you find it useful for your research, please just cite this GitHub page:
+FGTpartitioner is my implementation, if you find it useful for your research, please just cite this GitHub page:
 ```
 Chafin, TK. 2019. FGTpartitioner: https://github.com/tkchafin/FGTpartitioner
 ```
