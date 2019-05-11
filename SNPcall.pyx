@@ -13,6 +13,22 @@ cdef class SNPcall(object):
 	
 	def __lt__(self, other):
 		return(self.position < other.position)
+	
+	def __richcmp__(self, other, op):
+		if op == 2:#Py_EQ
+			return(self.position == other.position)
+		elif op == 3:#Py_NE
+			return(not self.position == other.position)
+		elif op == 0:
+			return(self.position < other.position)
+		elif op == 1:
+			return(self.position <= other.position)
+		elif op == 4:
+			return(self.position > other.position)
+		elif op == 5:
+			return(self.position >= other.position)
+		else:
+			assert False
 
 
 ##############################################################################
