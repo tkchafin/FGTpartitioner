@@ -108,6 +108,27 @@ One important option which you will need to consider is <-r>, which determines h
 
 In order to meet assumption #1, we need to manipulate our [unphased genotype data](https://www.biostars.org/p/7846/). FGTpartioner allows 3 ways in which this can be accomplished (passed as an integer option to the -r flag): 1) <-r 1> Randomly choose one allele and treat the sample as homozygous for that allele, at that position; 2) <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or 3) <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
 
+### Output
+The output of FGTpartitioner is a list of regions in GATK format (chromosome:start-end), in a 1-based indexing scheme:
+```
+CM000001.3:1-218120
+CM000001.3:218121-218432
+CM000001.3:218433-221068
+CM000001.3:221069-224784
+CM000001.3:224785-228655
+...
+...
+...
+```
+You can then use these to subset your VCF using your choice of tool. I usually use [vcftools](http://vcftools.sourceforge.net/) and [bcftools](https://samtools.github.io/bcftools/bcftools.html) for manipulating VCF files. 
+
+If you want to ultimately parse multiple sequence alignments from your VCF file and the FGTpartitioner outputs, I would recommend my tool [vcf2msa.py](https://github.com/tkchafin/vcf2msa.py).
+
+To get an average region size, you can use the following bash command:
+```
+less regions.out | sed "s/.*://g" | awk 'BEGIN{FS="-"}{print $2-$1}' |awk 'BEGIN{sum=0; count=0; sumsq=0}{count+=1; sum +=$1; sumsq+=$1*$1}END{print(sum/count); print sqrt(sumsq/count - (sum/count)**2)}'
+```
+
 ### The Four-Gamete Test
 The general principle of the [four-gamete test (FGT)](https://en.wikipedia.org/wiki/Four-gamete_test) is this: If we've sampled two positions (SNPs) along a chromosome, **assuming that multiple mutations at a site never occur** (= 'infinite sites' assumption), the ONLY way that we could possibly sample haploid chromosomes exhibiting **all** combinations of alleles at those two positions is if recombination had occured. 
 
