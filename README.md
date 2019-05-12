@@ -15,7 +15,7 @@ Chafin, TK. 2019. FGTpartitioner: https://github.com/tkchafin/FGTpartitioner
 
 
 ### Status
-FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. However, it is currently very slow. [Oh well.](https://uproxx.files.wordpress.com/2018/10/big-mouth-rick.jpg?quality=100&w=650) I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. I may spend a little more time profiling and optimizing, but the code does what I need it to do so I'll likely stop tinkering with it :)
+FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. I may work on continuing to optimize it a bit, but for right now the best solutions for speeding up FGTpartitioner with very large alignments is to use multiprocessing <-t> and to set a maximum physical distance for calculating FGTs <-d>. The justification for the latter is that there exists a certain physical map distance which is almost guaranteed to have spanned multiple recombinations, thus there is no point in continuing to search for FGT conflicts. Ideally you can find some published studies calculating linkage disequilibrium for your species or something similar, and inform this parameter with the larger-end of the expected linkage block size distribution.
 
 ### Dependencies
 Requires Python 3 and the following modules:
@@ -251,6 +251,8 @@ Pass #3               ====================>
 ```
 There are probably better ways to do it, but this accomplishes my goal so ¯\_(ツ)_/¯
 
+### Profiling
+I'll fill in this section as I have time.
 
 ### License
 Copyright © 2019 Tyler K. Chafin <tylerkchafin@gmail.com>
