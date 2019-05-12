@@ -264,6 +264,7 @@ Predicting the runtimes for FGTpartitioner is difficult, as it will depend on bo
 
 The effect of the distance setting scales linearly, with runtime increasing with the longer allowable-distance:
 ![](https://raw.githubusercontent.com/tkchafin/FGTpartitioner/master/images/distance_scaling.png)
+Note that these were calculated on a fairly large alignment of ~2 million variants. See above for how dataset size will effect runtimes.
 
 #### Multiprocess scaling
 
