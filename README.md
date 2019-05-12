@@ -23,13 +23,14 @@ Requires Python 3 and the following modules:
 - pySAM
 - intervaltree
 - Cython > 0.27 
-- multiprocess
+- pathos
+- tabix
 
 You will additionally need tabix installed to block-compress and index your VCF file (which enables me to parse it more quickly).
 
 The easiest way to install all of the dependencies is through conda:
 ```
-conda install -c conda-forge -c bioconda pyvcf intervaltree cython multiprocess pysam tabix
+conda install -c conda-forge -c bioconda pyvcf intervaltree cython pathos pysam tabix
 ```
 
 If you don't have conda installed, go [here](https://conda.io/en/latest/miniconda.html) and choose the correct Python3 installer for your system.
