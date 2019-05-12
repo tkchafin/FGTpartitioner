@@ -252,7 +252,21 @@ Pass #3               ====================>
 There are probably better ways to do it, but this accomplishes my goal so ¯\_(ツ)_/¯
 
 ### Profiling
-I'll fill in this section as I have time.
+To efficiently process very large alignments, FGTpartitioner is best used on an HPC system.
+
+#### Memory efficiency
+
+For example, with a very large full-chromosome alignment for a mammalian dataset, comprising >2,000,000 variants, FGTpartitioner peaked at about 22GB memory usage. 
+
+#### Runtimes
+
+Predicting the runtimes for FGTpartitioner is difficult, as it will depend on both the number of variants, and the number of them showing FGT conflicts (which increases the time for finding the most parsimonious breakpoints). 
+
+The effect of the distance setting scales linearly, with runtime increasing with the longer allowable-distance:
+![distance_scaling](https://github.com/tkchafin/FGTpartitioner/images/distance_scaling.png"Runtime x Distance parameter")
+
+
+#### Multiprocess scaling
 
 ### License
 Copyright © 2019 Tyler K. Chafin <tylerkchafin@gmail.com>
