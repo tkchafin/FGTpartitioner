@@ -273,6 +273,16 @@ Note that these were calculated on a fairly large alignment of ~2 million varian
 
 #### Multiprocess scaling
 
+FGTpartitioner shows diminishing returns with added processors, with adding a second core generally halving the runtime, while adding a 16th core does very little:
+![](https://raw.githubusercontent.com/tkchafin/FGTpartitioner/master/images/cpu_scaling.png)
+
+As such, if you have limited cores available but very large amount of sequence to process, a better investment of your available cores would be to use a modest amount (2-4) per chromosome (selected using -c), and to run individual chromosomes in separate FGTpartitioner runs. 
+
+One way you could do this would be with the excellent [GNU Parallel](https://www.gnu.org/software/parallel/) tool:
+```
+parallel `python3 FGTpartitioner.py -i input.vcf.gz -t 2 -c {} -o {}_regions.out' ::: {chr1 chr2 chr3 chr4}  
+```
+The above would dedicate 2 cores each to 4 separate FGDpartitioner runs (one for each of 4 chromosomes). You can read more on the use of GNU Parallel [here](https://www.gnu.org/software/parallel/parallel_tutorial.html)
 ### License
 Copyright © 2019 Tyler K. Chafin <tylerkchafin@gmail.com>
 
