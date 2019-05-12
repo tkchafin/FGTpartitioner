@@ -357,7 +357,7 @@ def findFGTs_parallel(nodes, params):
 	except Exception as e:
 		pool.close()
 		print("Unknown error:",e)
-		raise Exception(e)
+		sys.exit(1)
 	finally:
 		pool.close()
 		pool.join()

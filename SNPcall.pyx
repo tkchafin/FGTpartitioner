@@ -2,6 +2,10 @@
 
 import random
 
+def rebuild(pos, calls):
+	sc = SNPcall(pos, calls)
+	return(sc)
+
 cdef class SNPcall(object):
 	cdef public:
 		int position
@@ -29,6 +33,15 @@ cdef class SNPcall(object):
 			return(self.position >= other.position)
 		else:
 			assert False
+
+	#trying to make it pickle-able
+	@staticmethod
+	def rebuild(pos, calls):
+		sc = SNPcall(pos, calls)
+		return(sc)
+		
+	def __reduce__(self):
+		return(rebuild, (self.position, self.calls))
 
 
 ##############################################################################
