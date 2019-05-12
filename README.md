@@ -256,8 +256,9 @@ To efficiently process very large alignments, FGTpartitioner is best used on an 
 
 #### Memory efficiency
 
-For example, with a very large full-chromosome alignment for a mammalian dataset, comprising >2,000,000 variants, FGTpartitioner peaked at about 22GB memory usage. 
+For example, with a very large full-chromosome alignment for a mammalian dataset, comprising >2,000,000 variants, FGTpartitioner peaked at about 18GB memory usage. 
 ![](https://raw.githubusercontent.com/tkchafin/FGTpartitioner/master/images/mem_profile.png)
+Note that this will be effected by the number of cores, with less cores requiring less memory.
 
 #### Runtimes
 
