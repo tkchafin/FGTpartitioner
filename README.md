@@ -15,7 +15,7 @@ Chafin, TK. 2019. FGTpartitioner: https://github.com/tkchafin/FGTpartitioner
 
 
 ### Status
-FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. However, it is currently very slow. [Oh well.](https://uproxx.files.wordpress.com/2018/10/big-mouth-rick.jpg?quality=100&w=650) I've sped it up slightly by Cython-izing a major bottleneck, and enabling a parallel search for FGT conflicts using the multiprocess module. I may spend a little more time profiling and optimizing, but the code does what I need it to do so I'll likely stop tinkering with it :)
+FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. I may work on continuing to optimize it a bit, but for right now the best solutions for speeding up FGTpartitioner with very large alignments is to use multiprocessing <-t> and to set a maximum physical distance for calculating FGTs <-d>. The justification for the latter is that there exists a certain physical map distance which is almost guaranteed to have spanned multiple recombinations, thus there is no point in continuing to search for FGT conflicts. Ideally you can find some published studies calculating linkage disequilibrium for your species or something similar, and inform this parameter with the larger-end of the expected linkage block size distribution.
 
 ### Dependencies
 Requires Python 3 and the following modules:
@@ -107,6 +107,27 @@ Description: Computes parsimonious breakpoints to partition chromosomes into rec
 One important option which you will need to consider is <-r>, which determines how FGTpartitioner behaves when it encounters heteroozygotes. The four-gamete test has several assumptions, the most important being: 1) That you have sampled haploid chromosomes; and 2) an [infinite-sites](https://en.wikipedia.org/wiki/Infinite_sites_model) mutation model (e.g. all mutations occur at a new site- no back mutation, or multiple mutations per site). You can find more details below in the "Four-Gamete Test" section.
 
 In order to meet assumption #1, we need to manipulate our [unphased genotype data](https://www.biostars.org/p/7846/). FGTpartioner allows 3 ways in which this can be accomplished (passed as an integer option to the -r flag): 1) <-r 1> Randomly choose one allele and treat the sample as homozygous for that allele, at that position; 2) <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or 3) <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
+
+### Output
+The output of FGTpartitioner is a list of regions in GATK format (chromosome:start-end), in a 1-based indexing scheme:
+```
+CM000001.3:1-218120
+CM000001.3:218121-218432
+CM000001.3:218433-221068
+CM000001.3:221069-224784
+CM000001.3:224785-228655
+...
+...
+...
+```
+You can then use these to subset your VCF using your choice of tool. I usually use [vcftools](http://vcftools.sourceforge.net/) and [bcftools](https://samtools.github.io/bcftools/bcftools.html) for manipulating VCF files. 
+
+If you want to ultimately parse multiple sequence alignments from your VCF file and the FGTpartitioner outputs, I would recommend my tool [vcf2msa.py](https://github.com/tkchafin/vcf2msa.py).
+
+To get an average region size, you can use the following bash command:
+```
+less regions.out | sed "s/.*://g" | awk 'BEGIN{FS="-"}{print $2-$1}' |awk 'BEGIN{sum=0; count=0; sumsq=0}{count+=1; sum +=$1; sumsq+=$1*$1}END{print(sum/count); print sqrt(sumsq/count - (sum/count)**2)}'
+```
 
 ### The Four-Gamete Test
 The general principle of the [four-gamete test (FGT)](https://en.wikipedia.org/wiki/Four-gamete_test) is this: If we've sampled two positions (SNPs) along a chromosome, **assuming that multiple mutations at a site never occur** (= 'infinite sites' assumption), the ONLY way that we could possibly sample haploid chromosomes exhibiting **all** combinations of alleles at those two positions is if recombination had occured. 
@@ -230,6 +251,22 @@ Pass #3               ====================>
 ```
 There are probably better ways to do it, but this accomplishes my goal so ¯\_(ツ)_/¯
 
+### Profiling
+To efficiently process very large alignments, FGTpartitioner is best used on an HPC system.
+
+#### Memory efficiency
+
+For example, with a very large full-chromosome alignment for a mammalian dataset, comprising >2,000,000 variants, FGTpartitioner peaked at about 22GB memory usage. 
+
+#### Runtimes
+
+Predicting the runtimes for FGTpartitioner is difficult, as it will depend on both the number of variants, and the number of them showing FGT conflicts (which increases the time for finding the most parsimonious breakpoints). 
+
+The effect of the distance setting scales linearly, with runtime increasing with the longer allowable-distance:
+![distance_scaling](https://github.com/tkchafin/FGTpartitioner/images/distance_scaling.png)
+[distance_scaling](https://github.com/tkchafin/FGTpartitioner/images/distance_scaling.png)
+
+#### Multiprocess scaling
 
 ### License
 Copyright © 2019 Tyler K. Chafin <tylerkchafin@gmail.com>
