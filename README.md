@@ -257,16 +257,16 @@ To efficiently process very large alignments, FGTpartitioner is best used on an 
 #### Memory efficiency
 
 For example, with a very large full-chromosome alignment for a mammalian dataset, comprising >2,000,000 variants, FGTpartitioner peaked at about 22GB memory usage. 
+![](https://raw.githubusercontent.com/tkchafin/FGTpartitioner/master/images/mem_profile.png)
 
 #### Runtimes
 
 Predicting the runtimes for FGTpartitioner is difficult, as it will depend on both the number of variants, and the number of them showing FGT conflicts (which increases the time for finding the most parsimonious breakpoints). 
 
-The impact of
+Runtimes in general will scale n^2 with dataset size:
 ![](https://raw.githubusercontent.com/tkchafin/FGTpartitioner/master/images/size_scaling.png)
 
-
-The effect of the distance setting scales linearly, with runtime increasing with the longer allowable-distance:
+This can be helped by using the <-d> makimum allowable distance, which produced a linear speed-up:
 ![](https://raw.githubusercontent.com/tkchafin/FGTpartitioner/master/images/distance_scaling.png)
 Note that these were calculated on a fairly large alignment of ~2 million variants. See above for how dataset size will effect runtimes.
 
