@@ -263,8 +263,8 @@ For example, with a very large full-chromosome alignment for a mammalian dataset
 Predicting the runtimes for FGTpartitioner is difficult, as it will depend on both the number of variants, and the number of them showing FGT conflicts (which increases the time for finding the most parsimonious breakpoints). 
 
 The effect of the distance setting scales linearly, with runtime increasing with the longer allowable-distance:
-![distance_scaling](https://github.com/tkchafin/FGTpartitioner/images/distance_scaling.png)
-[distance_scaling](https://github.com/tkchafin/FGTpartitioner/images/distance_scaling.png)
+![distance_scaling](https://github.com/tkchafin/FGTpartitioner/tree/master/images/distance_scaling.png"Runtime x Distance scaling")
+
 
 #### Multiprocess scaling
 
