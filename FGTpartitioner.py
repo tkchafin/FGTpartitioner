@@ -212,15 +212,10 @@ def resolveFGTs(tree, sorted_k, nodes):
 					#max_intersects = intersects
 
 			#remove all intervals overlapping with centerpoint at greatest depth
-			try:
-				tree.remove_overlap(int(max_centerpoint))
-			#had some weird cases where the above Failed
-			#if it didn't work, try manually removing them:
-			except:
-				#print("Failed at centerpoint",centerpoint)
-				#print("overlapping intervals:")
-				for i in tree[max_centerpoint]:
-					tree.discard(i)
+			#print("Failed at centerpoint",centerpoint)
+			#print("overlapping intervals:")
+			for i in tree[max_centerpoint]:
+				tree.discard(i)
 					#print(i)
 			#add to breakpoints
 			breaks.append(max_centerpoint)
