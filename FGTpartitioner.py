@@ -15,7 +15,8 @@ from SNPcall import SNPcall
 from intervaltree import Interval, IntervalTree
 from collections import OrderedDict
 from functools import partial
-import multiprocessing
+import pathos.multiprocessing as mult
+from pathos.multiprocessing import ProcessPool as Pool
 
 def main():
 	params = parseArgs()
@@ -340,7 +341,7 @@ def findFGTs_parallel(nodes, params):
 	#multiprocess call
 	#print("\tmultiprocess call for processes:",proc_numbers)
 	try:
-		with multiprocessing.Pool(processes=params.threads) as pool:
+		with mult.Pool(processes=params.threads) as pool:
 			#build function call
 			#print("nodes:",len(nodes))
 			func = partial(findFGTs_worker, nodes, params.threads, params.rule, params.dist)
