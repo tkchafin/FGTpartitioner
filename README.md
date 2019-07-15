@@ -8,9 +8,9 @@ Of note, there are multiple options for partioning a genome using the four-gamet
 - https://github.com/YichaoOU/genome_partition
 - http://www.csbio.unc.edu/mcmillan/pubs/BCB10_Wang.pdf
 
-FGTpartitioner is my implementation, if you find it useful for your research, please just cite this GitHub page:
+FGTpartitioner is my implementation, if you find it useful for your research, please see the associated pre-print:
 ```
-Chafin, TK. 2019. FGTpartitioner: https://github.com/tkchafin/FGTpartitioner
+Chafin, TK. FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets. https://www.biorxiv.org/content/10.1101/644088v1
 ```
 
 
