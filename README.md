@@ -10,7 +10,7 @@ Of note, there are multiple options for partioning a genome using the four-gamet
 
 FGTpartitioner is my implementation, if you find it useful for your research, please see the associated pre-print:
 
-Chafin, TK. (FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets.) [https://www.biorxiv.org/content/10.1101/644088v1]
+Chafin, TK. [FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets.](https://www.biorxiv.org/content/10.1101/644088v1)
 
 
 
