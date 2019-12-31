@@ -22,7 +22,7 @@ bibliography: paper.bib
 # Summary
 
 Partitioning large (e.g. chromosomal) alignments into ancestry blocks is a common step in 
-phylogenomic analyses (Springer & Gatesy, 2018). However, current solutions require complicated 
+phylogenomic analyses `[@Dutheil2009]`. However, current solutions require complicated 
 analytical assumptions, or are difficult to implement due to excessive runtimes.  Multiple approaches 
 have been proposed for delimiting ancestry blocks in genomes (i.e. establishing recombination 
 breakpoints), which generally fall into one of two categories: those which require dense or phased 
