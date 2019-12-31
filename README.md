@@ -15,7 +15,7 @@ Chafin, TK. [FGTpartitioner: Parsimonious delimitation of ancestry breakpoints i
 
 
 ### Status
-FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. I may work on continuing to optimize it a bit, but for right now the best solutions for speeding up FGTpartitioner with very large alignments is to use multiprocessing <-t> and to set a maximum physical distance for calculating FGTs <-d>. The justification for the latter is that there exists a certain physical map distance which is almost guaranteed to have spanned multiple recombinations, thus there is no point in continuing to search for FGT conflicts. Ideally you can find some published studies calculating linkage disequilibrium for your species or something similar, and inform this parameter with the larger-end of the expected linkage block size distribution.
+FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. Right now the best solutions for speeding up FGTpartitioner with very large alignments is to use multiprocessing <-t> and to set a maximum physical distance for calculating FGTs <-d>. The justification for the latter is that there exists a certain physical map distance which is almost guaranteed to have spanned multiple recombinations, thus there is no point in continuing to search for FGT conflicts. Ideally you can find some published studies calculating linkage disequilibrium for your species or something similar, and inform this parameter with the larger-end of the expected linkage block size distribution.
 
 ### Dependencies
 Requires Python 3 and the following modules:
