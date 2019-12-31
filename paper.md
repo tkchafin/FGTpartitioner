@@ -42,17 +42,13 @@ regardless of processing order. These sub-alignments are then suitable for separ
 analysis, or as a ‘first pass’ which may facilitate parallel application of finer-resolution (yet 
 more computationally intensive) methods.
 
-For ease of application, inputs are required to follow the widely used VCF format [@Danecek2011]. 
-Users may provide parameter settings as arguments in the command-line interface which can restrict block 
-delimitation to a certain chromosome (<-c> flag), with the option to additionally target a region via 
-start (<-s>) and end (<-e>) coordinates. Parallel computation is also possible (<-t>) for particularly 
-large alignments. After parsing user-inputs, the workflow of ``FGTpartitioner`` is as follows:
+After parsing user-inputs, the workflow of ``FGTpartitioner`` is as follows:
 
 (1)	For each SNP, perform four-gamete tests sequentially for rightward neighboring records, up to a 
-maximal physical distance (if defined; <-d>) and stopping when a conflict (=’interval’) is found. Intervals are
-stored in a self-balancing tree. When using multiprocessing (<-t>), daughter processes are each provided 
+maximal physical distance (if defined) and stopping when a conflict (=’interval’) is found. Intervals are
+stored in a self-balancing tree. When using multiprocessing, daughter processes are each provided 
 an offset which guarantees a unique pairwise SNP comparison for each iteration 
-(2)	Merge interval trees of daughter processes (if <-t 2 or greater>)
+(2)	Merge interval trees of daughter processes (if using optional parallel computation)
 (3)	Assign rank k per-interval, defined as the number of SNP records (indexed by position) spanned by each 
 interval 
 (4)	Order intervals by k; starting at min(k), resolve conflicts as follows: For each candidate recombination 
@@ -65,7 +61,7 @@ as physical centerpoints between nodes means that monomorphic sites will be even
 of a recombination event. Because monomorphic sites by definition lack phylogenetic information, they 
 cannot be unambiguously assigned to any particular ancestry block, thus my solution is to evenly divide them.
 Heterozygous sites in diploid genomes are dealt with in multiple ways. By default, FGTpartitioner will 
-randomly resolve haplotypes. The user can select an alternate resolution strategy (<-r>) which will either 
+randomly resolve haplotypes. The user can select an alternate resolution strategy which will either 
 treat a SNP pair as failing if any resolution meets the four-gamete condition, or as passing if any possible 
 resolution passes (i.e. the 'pessimistic' and 'optimistic' strategies of @Wang2010).
 
