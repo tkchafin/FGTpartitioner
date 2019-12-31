@@ -60,7 +60,7 @@ the same recombination sites will be chosen given any arbitrary ordering of SNPs
 as physical centerpoints between nodes means that monomorphic sites will be evenly divided on either side 
 of a recombination event. Because monomorphic sites by definition lack phylogenetic information, they 
 cannot be unambiguously assigned to any particular ancestry block, thus my solution is to evenly divide them.
-Heterozygous sites in diploid genomes are dealt with in multiple ways. By default, FGTpartitioner will 
+Heterozygous sites in diploid genomes are dealt with in multiple ways. By default, ``FGTpartitioner`` will 
 randomly resolve haplotypes. The user can select an alternate resolution strategy which will either 
 treat a SNP pair as failing if any resolution meets the four-gamete condition, or as passing if any possible 
 resolution passes (i.e. the 'pessimistic' and 'optimistic' strategies of @Wang2010).
@@ -68,7 +68,7 @@ resolution passes (i.e. the 'pessimistic' and 'optimistic' strategies of @Wang20
 In conclusion, ``FGTpartitioner`` has several advantages over similar methods: 1) algorithmic and performance enhancements 
 allow it to perform orders of magnitude faster, thus extending application to larger genomes; and 2) the 
 flexibility of diploid resolution strategies precludes the need for haplotype phasing a priori. Validation 
-using empirical data indicated the suitability of FGTpartitioner for highly distributed work on high-performance
+using empirical data indicated the suitability of ``FGTpartitioner`` for highly distributed work on high-performance
 computing clusters, with parallelization easily facilitated by built-in options in the command-line interface. 
 Additionally, runtime and memory profiling indicate its applicability on modern desktop workstations as well, 
 when applied to moderately sized datasets. Thus, it provides an efficient and under-friendly solution to alignment 
