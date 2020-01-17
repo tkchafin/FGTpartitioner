@@ -6,7 +6,7 @@ Input is a VCF file, which can represent unphased genotypes, and output is a par
 Of note, there are multiple options for partioning a genome using the four-gamete test. Here are a few, sorry if I left anyone out:
 - https://github.com/RILAB/rmin_cut
 - https://github.com/YichaoOU/genome_partition
-- http://www.csbio.unc.edu/mcmillan/pubs/BCB10_Wang.pdf
+- https://github.com/txje/compatible-intervals
 
 FGTpartitioner is my implementation, if you find it useful for your research, please see the associated pre-print:
 
