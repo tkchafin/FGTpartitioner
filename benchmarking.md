@@ -7,7 +7,7 @@ For comparison, I attempted to delimit recombinatorial genes using an alternate 
  
 ## References
 
-Ané, C. (2011). Detecting phylogenetic breakpoints and discordance from genome-wide alignments for species tree reconstruction. Genome Biology and Evolution, 3(1), 246–258. doi:10.1093/gbe/evr013
-Langmead, B., & Salzberg, S. L. (2012). Fast gapped-read alignment with Bowtie 2. Nature Methods. doi:10.1038/nmeth.1923
+-Ané, C. (2011). Detecting phylogenetic breakpoints and discordance from genome-wide alignments for species tree reconstruction. Genome Biology and Evolution, 3(1), 246–258. doi:10.1093/gbe/evr013
+-Langmead, B., & Salzberg, S. L. (2012). Fast gapped-read alignment with Bowtie 2. Nature Methods. doi:10.1038/nmeth.1923
 McKenna, A., Hanna, M., Banks, E., Sivachenko, A., Cibulskis, K., Kernytsky, A., … DePristo, M. A. (2010). The Genome Analysis Toolkit: a MapReduce framework for analyzing next-generation DNA sequencing data. Genome Research. doi:10.1101/gr.107524.110
 
