@@ -46,6 +46,16 @@ After that, FGTpartitioner is ready to run. You can view the help menu by typing
 ./FGTpartitioner.py -h
 ```
 
+Note that this assumes your python installation is in /usr/bin/env. If for example you are using a local anaconda python installation, you can provide a path to the python interpreter:
+```
+~/anaconda/bin/python3 FGTpartitioner.py -h
+```
+
+Or, if your local python is in your $PATH:
+```
+python3 FGTpartitioner.py -h
+```
+
 ### Inputs
 
 The input file (provided via -v) is a standard VCF file, including contig lengths in the ##contig headers. You can find an example of a VCF file in the examples/ directory. In short, a minimally conforming VCF should have the following structure:
