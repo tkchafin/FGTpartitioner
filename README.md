@@ -118,6 +118,9 @@ One important option which you will need to consider is <-r>, which determines h
 
 In order to meet assumption #1, we need to manipulate our [unphased genotype data](https://www.biostars.org/p/7846/). FGTpartioner allows 3 ways in which this can be accomplished (passed as an integer option to the -r flag): 1) <-r 1> Randomly choose one allele and treat the sample as homozygous for that allele, at that position; 2) <-r 2> Ask if **either** allele causes a failure of the four-gamete test, and treat the comparison as failed if so (e.g. a pessimistic/safe approach); or 3) <-r 3> ask if **either** allele could possibly be consistent with the four-gametes assumption, and pass the comparison if so (e.g. an optimistic approach). This pessimistic/optimistic approach was inspired by [Wang et al (2010)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5690570/)
 
+### Example
+Some test data for verifying the function of FGTpartitioner are presented in the examples/ directory. 
+
 ### Output
 The output of FGTpartitioner is a list of regions in GATK format (chromosome:start-end), in a 1-based indexing scheme:
 ```
