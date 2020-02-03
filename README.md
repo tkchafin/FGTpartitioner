@@ -121,6 +121,7 @@ In order to meet assumption #1, we need to manipulate our [unphased genotype dat
 ### Example
 Some test data for verifying the function of FGTpartitioner are presented in the examples/ directory. 
 
+
 ### Output
 The output of FGTpartitioner is a list of regions in GATK format (chromosome:start-end), in a 1-based indexing scheme:
 ```
