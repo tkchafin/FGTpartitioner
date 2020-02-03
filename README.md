@@ -121,6 +121,89 @@ In order to meet assumption #1, we need to manipulate our [unphased genotype dat
 ### Example
 Some test data for verifying the function of FGTpartitioner are presented in the examples/ directory. 
 
+To run a simple test case, you can use the included examples/example_1.vcf file. You could generate the required block-compressed VCF and index files like so (although these are already provided for you: examples/example_1.vcf.gz and examples/example_1.vcf.gz.tbi):
+```
+cd examples
+bgzip example_1.vcf
+tabix -h -f -p vcf example_1.vcf.gz
+cd -
+```
+
+To run a simple case, with all sites passing if any possible heterozygote resolution works (see below in documentation):
+```
+python FGTpartitioner.py -v examples/example_1.vcf.gz -r 3 -o out.txt
+```
+
+The screen output of FGTpartitioner would look like so:
+```
+Opening VCF file: examples/example_1.vcf.gz
+Reading all chromosomes from VCF...
+Diploid resolution strategy: Optimistic (change with -r)
+Number of process threads: 1 (change with -t)
+Minimum genotyped individuals to consider locus: 2 (change w/ -m)
+
+Starting FGT sweeps.....
+
+Performing FGT check on: chr1.scaffold1
+	Chromosome chr1.scaffold1 skipped 1 sites for too much missing data.
+	Chromosome chr1.scaffold1 skipped 1 sites for too many alleles.
+	Chromosome chr1.scaffold1 found 10 passing variants.
+	Seeking intervals across chr1.scaffold1 using 1 threads.
+	Found  4 intervals.
+	Resolving FGT incompatibilities...
+	Found 3 most parsimonious breakpoints.
+
+Writing regions to file (format: chromosome:start-end)
+Note that these are 1-based indexing (VCF is 0-based)
+Done
+```
+Before starting work, this reports the diploid resolution strategy (here "Optimistic" for <-r 3>), the number of process threads, and the number of individuals required to consider a SNP, as well as the correct flags required to modify those values. Next, FGTpartitioner reports the number of sites skipped (if any), as well as the number of intervals found, and number of parsimonious breakpoints required to resolve all intervals.
+
+This would produce the following "out.txt", formatted as chromosome:start-end, with 1-based indexing (note that FGTpartitioner will remind you of this format in the terminal output):
+```
+$cat out.txt
+chr1.scaffold1:1-150
+chr1.scaffold1:151-300
+chr1.scaffold1:301-10001
+```
+
+To run with 4 threads (-t), a minimum of 4 genotyped samples per site (-m), and a maximum considered distance of 200 bases (-d):
+```
+python FGTpartitioner.py -v examples/example_1.vcf.gz -r 3 -o out.txt -t 4 -m 3 -d 200
+```
+
+This produces the following output:
+```
+Opening VCF file: examples/example_1.vcf.gz
+Reading all chromosomes from VCF...
+Diploid resolution strategy: Optimistic (change with -r)
+Number of process threads: 4 (change with -t)
+Minimum genotyped individuals to consider locus: 3 (change w/ -m)
+
+Starting FGT sweeps.....
+
+Performing FGT check on: chr1.scaffold1
+	Chromosome chr1.scaffold1 skipped 2 sites for too much missing data.
+	Chromosome chr1.scaffold1 skipped 1 sites for too many alleles.
+	Chromosome chr1.scaffold1 found 9 passing variants.
+	Seeking intervals across chr1.scaffold1 using 4 threads.
+	Merging results from child processes...
+	Found  3 intervals.
+	Resolving FGT incompatibilities...
+	Found 3 most parsimonious breakpoints.
+
+Writing regions to file (format: chromosome:start-end)
+Note that these are 1-based indexing (VCF is 0-based)
+Done
+```
+Note that the number of passed sited decreased (9 from 10), reflecting the more stringent gentotype filter (-m 4), as did the number of intervals which were found. The resulting out.txt recovered the same intervals in this case:
+```
+$cat out.txt
+chr1.scaffold1:1-150
+chr1.scaffold1:151-300
+chr1.scaffold1:301-10001
+```
+If you do not get these exact same outputs, something may not be working. Feel free to post an issue here on github, or email me at tkchafin(@)uark.edu for help. Please include your exact commands and outputs, including any error messages you receive.
 
 ### Output
 The output of FGTpartitioner is a list of regions in GATK format (chromosome:start-end), in a 1-based indexing scheme:
