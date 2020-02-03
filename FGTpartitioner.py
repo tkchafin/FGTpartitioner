@@ -19,8 +19,10 @@ import pathos.multiprocessing as mult
 from pathos.multiprocessing import ProcessPool as Pool
 
 def main():
+	"""FGTpartitioner main function"""
 	params = parseArgs()
-
+	
+	#define VCF reader
 	print("\nOpening VCF file:",params.vcf)
 	vfh = vcf.Reader(filename=params.vcf)
 
@@ -187,6 +189,9 @@ Solving algorithm:
 
 
 def resolveFGTs(tree, sorted_k, nodes):
+	"""Input: IntervalTree, dictionary mapping k to nodes, and a list of SNPcall (nodes) objects
+	   Function: Finds a minimal set of breakpoints that resolve all intervals in IntervalTree
+	   Returns: list of coordinates (breakpoints)"""
 	breaks = list()
 	for i in sorted_k:
 		this_interval = i[1]
@@ -225,6 +230,10 @@ def resolveFGTs(tree, sorted_k, nodes):
 
 #TODO:try to speed this up. 13% of total runtime
 def findFGTs(nodes, params):
+	"""Inputs: list of Node object and a parseArgs object
+	   Purpose: Single-threaded rightward search of SNP pairs failing FGT
+	   Returns: IntervalTree object and a dictionary for looking up k-values for each interval
+	"""
 	start = 0
 	end = 1
 	count=0
@@ -262,7 +271,10 @@ def findFGTs(nodes, params):
 
 #findFGTs function for the parallel call
 def findFGTs_worker(local_nodes, threads, rule, dist, proc_number):
-	#print("proc")
+	"""Inputs: list of nodes this worker is responsible for, the number of total threads, rule (1,2 or 3) for heterozygote resolution, maximum distance for SNP checking, and a process number (e.g. of X total)
+	   Purpose: Parallel 'worker' function for rightward SNP testing. Each worker receives an offset, and only checks every <offset> SNP
+	   Returns: IntervalTree object and a dictionary for looking up k-values for each interval
+	"""
 	try:
 		#print("nodes:",len(local_nodes))
 		start = 0 + proc_number #everyprocess starts at an offset
@@ -321,6 +333,10 @@ def findFGTs_worker(local_nodes, threads, rule, dist, proc_number):
 
 
 def findFGTs_parallel(nodes, params):
+	"""Inputs: list of SNPcall objects and a parseArgs object
+	   Purpose: Master process wrapping the findFGTs_worker functions. Parses the parseArgs argument to send params to workers, gathers worker results, and builds a composite IntervalTree
+	   Returns: IntervalTree object and a dictionary for looking up k-values for each interval
+	"""
 	tree = IntervalTree()
 	k_lookup = dict()
 	#calculate skip sizes for each process
@@ -363,6 +379,10 @@ def findFGTs_parallel(nodes, params):
 
 
 def fetchNodes(records, this_chrom, params):
+	"""Inputs: vcf.Reader object, chromosome name to parse, and a parseArgs object
+	   Purpose: Finds VCF records passing the thresholds passed in parseArgs object
+	   Returns: List of SNPcall objects
+	"""
 	nodes = list()
 	miss_skips = 0
 	allel_skips = 0
@@ -391,7 +411,10 @@ def fetchNodes(records, this_chrom, params):
 
 #Function to write list of regions tuples, in GATK format
 def write_regions(f, r):
-
+	"""Inputs: file name (f) and a list of regions (r)
+	   Purpose: Writes an output file of regions formatted as chromosome:start-end
+	   Returns: None
+	"""
 	with open(f, 'w') as fh:
 		try:
 			for reg in r:
@@ -411,6 +434,10 @@ def write_regions(f, r):
 #function to calculate region bounds from breakpoints
 #returns list of region tuples
 def getRegions(breaks, lengths, s, e):
+	"""Inputs: dictionary of breakpoints for each chromosome, dictionary of chromosome lengths, start (s) and end (e) coordinates
+	   Purpose: Calculated region coordinates from list of breakpoints
+	   Returns: List of regions
+	"""
 	ret = list()
 	#print(breaks)
 	for chrom in breaks.keys():
@@ -446,7 +473,12 @@ def getRegions(breaks, lengths, s, e):
 
 #Object to parse command-line arguments
 class parseArgs():
+	"""Inputs: None
+	   Purpose: Parses command-line arguments; wraps getopt
+	   Returns: custom class for wrapping getopt calls and holding parameters
+	"""
 	def __init__(self):
+		"""constructor for custom class for wrapping getopt calls and holding parameters"""
 		#Define options
 		try:
 			options, remainder = getopt.getopt(sys.argv[1:], 's:e:v:r:c:o:t:m:a:d:h', \
@@ -512,6 +544,7 @@ class parseArgs():
 			self.display_help("Value for <-r> must be one of: 1, 2 or 3")
 
 	def display_help(self, message=None):
+		"""Kills process and writes help menu for the parseArgs object"""
 		if message is not None:
 			print()
 			print (message)
@@ -541,17 +574,20 @@ class parseArgs():
 		print()
 		sys.exit()
 
-###overriding __lt__ method for Interval
+
 def IntervalSort(self,other):
+	"""overriding __lt__ method for Interval"""
 	return(self.data < other.data)
 
 class IntervalData():
+	"""custom class for holding interval coordinates"""
 	def __init__(self, start, end, index):
 		self.start = start
 		self.end = end
 		self.index=index
 		self.k = end-start
 
+	#getters and setter functions
 	def __lt__(self, other):
 		return(self.k < other.k)
 
