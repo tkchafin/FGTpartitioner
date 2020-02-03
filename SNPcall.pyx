@@ -3,15 +3,18 @@
 import random
 
 def rebuild(pos, calls):
+	"""function for rebuilding a SNPcall object given its own values. necessary to make SNPcall objects pickle-able"""
 	sc = SNPcall(pos, calls)
 	return(sc)
 
 cdef class SNPcall(object):
+	"""custom class for storing SNP nodes for IntervalTree; stores individual sample calls as a list, and a coordinate"""
 	cdef public:
 		int position
 		list calls
 
 	def __init__(self, pos, samps):
+		"""constructor for SNPcall"""
 		self.position = int(pos)
 		self.calls = list(samps)
 	
@@ -19,6 +22,7 @@ cdef class SNPcall(object):
 	# 	return(self.position < other.position)
 	
 	def __richcmp__(self, other, op):
+		"""special method defining comparison rules for SNPcall objects"""
 		if op == 2:#Py_EQ
 			return(self.position == other.position)
 		elif op == 3:#Py_NE
@@ -48,6 +52,7 @@ cdef class SNPcall(object):
 
 	#TODO:try to speed this up. 32% of runtime currently
 	def FGT(self, other, rule):
+		"""method for comparing a SNPcall object (self) with another SNPcall object to run four-gamete test. Returns: boolean"""
 		#print("Four gamete test for",self.position,"and",other.position)
 		cdef list gametes = [0,0,0,0] #00, 01, 10, 11
 		cdef list hets = list()
@@ -105,6 +110,7 @@ cdef class SNPcall(object):
 	@staticmethod
 	#TODO: Optimize; currently 11% of runtime after 2X speedup
 	def hapCheck(geno):
+		"""finds gametes from a genotype"""
 		#print(geno)
 		if geno[0] == 0:
 			if geno[1] == 0:
@@ -124,6 +130,7 @@ cdef class SNPcall(object):
 			return(9)
 	
 	def optimisticFGT(self, seen, hets):
+		""" Function returns True if any genotype comparison in a provided set of heterozygotes passes the four-gamete test"""
 		cdef list possibilities = list()
 		cdef list locals = list()
 		cdef possible1 = list()
