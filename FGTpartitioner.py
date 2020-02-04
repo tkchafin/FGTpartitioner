@@ -548,7 +548,7 @@ class parseArgs():
 		if message is not None:
 			print()
 			print (message)
-		print ("\nFGTpartitioner.py\n")
+		print ("\nFGTpartitioner.py v1.0.1\n")
 		print ("Contact:Tyler K. Chafin, tylerkchafin@gmail.com")
 		print ("\nUsage: ", sys.argv[0], "-v <input.vcf> -r <1|2|3> [-c chr1]\n")
 		print ("Description: Computes parsimonious breakpoints to partition chromosomes into recombination-free blocks")
