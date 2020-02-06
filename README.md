@@ -1,6 +1,12 @@
 # FGTpartitioner
 [![version][version-badge]][CHANGELOG] [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+Partitions genome data using the 4-gamete test into a minimal number of blocks which contain no recombinations (=FGT conflicts)
+
+Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
+
+## Citation
+
 Markdown:
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02030/status.svg)](https://doi.org/10.21105/joss.02030)
 
@@ -13,18 +19,16 @@ reStructuredText:
 .. image:: https://joss.theoj.org/papers/10.21105/joss.02030/status.svg
    :target: https://doi.org/10.21105/joss.02030
 
-Partitions genome data using the 4-gamete test into a minimal number of blocks which contain no recombinations (=FGT conflicts)
+If you find FGTpartitioner useful for your research, please cite the associated publication:
 
-Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
+Chafin, TK. [FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets.](https://joss.theoj.org/papers/10.21105/joss.02030) Journal of Open Source Software, 5(46), 2030, https://doi.org/10.21105/joss.02030
 
 Of note, there are multiple options for partioning a genome using the four-gamete test. Here are a few, sorry if I left anyone out:
 - https://github.com/RILAB/rmin_cut
 - https://github.com/YichaoOU/genome_partition
 - https://github.com/txje/compatible-intervals
 
-FGTpartitioner is my implementation, if you find it useful for your research, please see the associated pre-print:
 
-Chafin, TK. [FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets.](https://www.biorxiv.org/content/10.1101/644088v1)
 
 
 
