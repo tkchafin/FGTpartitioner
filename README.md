@@ -9,7 +9,7 @@ Input is a VCF file, which can represent unphased genotypes, and output is a par
 
 If you find FGTpartitioner useful for your research, please cite the associated publication:
 
-Chafin, TK. [FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets.](https://joss.theoj.org/papers/10.21105/joss.02030) Journal of Open Source Software, 5(46), 2030, https://doi.org/10.21105/joss.02030
+Chafin, TK. 2020. [FGTpartitioner: Parsimonious delimitation of ancestry breakpoints in large genome-wide SNP datasets.](https://joss.theoj.org/papers/10.21105/joss.02030) Journal of Open Source Software, 5(46), 2030, https://doi.org/10.21105/joss.02030
 
 Of note, there are multiple options for partioning a genome using the four-gamete test. Here are a few, sorry if I left anyone out:
 - https://github.com/RILAB/rmin_cut
