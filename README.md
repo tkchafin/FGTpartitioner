@@ -1,23 +1,11 @@
 # FGTpartitioner
-[![version][version-badge]][CHANGELOG] [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![version][version-badge]][CHANGELOG] [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![DOI](https://joss.theoj.org/papers/10.21105/joss.02030/status.svg)](https://doi.org/10.21105/joss.02030)
 
 Partitions genome data using the 4-gamete test into a minimal number of blocks which contain no recombinations (=FGT conflicts)
 
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
 
-## Citation
-
-Markdown:
-[![DOI](https://joss.theoj.org/papers/10.21105/joss.02030/status.svg)](https://doi.org/10.21105/joss.02030)
-
-HTML:
-<a style="border-width:0" href="https://doi.org/10.21105/joss.02030">
-  <img src="https://joss.theoj.org/papers/10.21105/joss.02030/status.svg" alt="DOI badge" >
-</a>
-
-reStructuredText:
-.. image:: https://joss.theoj.org/papers/10.21105/joss.02030/status.svg
-   :target: https://doi.org/10.21105/joss.02030
+### Citation
 
 If you find FGTpartitioner useful for your research, please cite the associated publication:
 
@@ -29,11 +17,8 @@ Of note, there are multiple options for partioning a genome using the four-gamet
 - https://github.com/txje/compatible-intervals
 
 
-
-
-
 ### Status
-FGTpartitioner is currently working properly, and finds the same FGT conflicts as other programs that I have tested. Right now the best solutions for speeding up FGTpartitioner with very large alignments is to use multiprocessing <-t> and to set a maximum physical distance for calculating FGTs <-d>. The justification for the latter is that there exists a certain physical map distance which is almost guaranteed to have spanned multiple recombinations, thus there is no point in continuing to search for FGT conflicts. Ideally you can find some published studies calculating linkage disequilibrium for your species or something similar, and inform this parameter with the larger-end of the expected linkage block size distribution.
+FGTpartitioner is published in the Journal of Open Source Software (see above), and finds the same FGT conflicts as other programs that I have tested. Right now the best solutions for speeding up FGTpartitioner with very large alignments is to use multiprocessing <-t> and to set a maximum physical distance for calculating FGTs <-d>. The justification for the latter is that there exists a certain physical map distance which is almost guaranteed to have spanned multiple recombinations, thus there is no point in continuing to search for FGT conflicts. Ideally you can find some published studies calculating linkage disequilibrium for your species or something similar, and inform this parameter with the larger-end of the expected linkage block size distribution.
 
 ### Dependencies
 Requires Python 3 and the following modules:
