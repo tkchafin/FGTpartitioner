@@ -1,6 +1,18 @@
 # FGTpartitioner
 [![version][version-badge]][CHANGELOG] [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+Markdown:
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02030/status.svg)](https://doi.org/10.21105/joss.02030)
+
+HTML:
+<a style="border-width:0" href="https://doi.org/10.21105/joss.02030">
+  <img src="https://joss.theoj.org/papers/10.21105/joss.02030/status.svg" alt="DOI badge" >
+</a>
+
+reStructuredText:
+.. image:: https://joss.theoj.org/papers/10.21105/joss.02030/status.svg
+   :target: https://doi.org/10.21105/joss.02030
+
 Partitions genome data using the 4-gamete test into a minimal number of blocks which contain no recombinations (=FGT conflicts)
 
 Input is a VCF file, which can represent unphased genotypes, and output is a parsimonious set of breakpoints separating non-overlapping intervals which do not show evidence of recombination, as tested using the four-gamete test. 
